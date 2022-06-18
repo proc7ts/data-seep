@@ -1,0 +1,69 @@
+{
+  "name": "@proc7ts/seep",
+  "version": "0.1.0",
+  "description": "Tools for implementing Data Seep Pattern",
+  "keywords": [
+    "data-faucet",
+    "data-seep",
+    "data-sink"
+  ],
+  "homepage": "https://github.com/proc7ts/seep",
+  "repository": {
+    "type": "git",
+    "url": "ssh://git@github.com:proc7ts/seep.git"
+  },
+  "license": "MIT",
+  "author": "Ruslan Lopatin <ruslan.lopatin@gmail.com>",
+  "bugs": {
+    "url": "https://github.com/proc7ts/seep/issues"
+  },
+  "type": "module",
+  "types": "./dist/seep.d.ts",
+  "exports": {
+    "types": "./dist/seep.d.ts",
+    "default": "./dist/seep.js"
+  },
+  "dependencies": {
+    "@proc7ts/async": "^1.0.0-pre.4",
+    "@proc7ts/primitives": "4.0.0-pre.2",
+    "@proc7ts/supply": "2.0.0-pre.11"
+  },
+  "devDependencies": {
+    "@jest/globals": "^28.1.1",
+    "@run-z/eslint-config": "^3.0.1",
+    "@run-z/rollup-helpers": "^2.0.0",
+    "@types/node": "^16.11.41",
+    "@typescript-eslint/eslint-plugin": "^5.28.0",
+    "@typescript-eslint/parser": "^5.28.0",
+    "eslint": "^8.18.0",
+    "eslint-plugin-jest": "^26.5.3",
+    "gh-pages": "^4.0.0",
+    "jest": "^28.1.1",
+    "jest-junit": "^13.2.0",
+    "jest-mock": "^28.1.1",
+    "prettier": "^2.7.1",
+    "rollup": "^2.75.6",
+    "rollup-plugin-flat-dts": "^1.6.1",
+    "rollup-plugin-sourcemaps": "^0.6.3",
+    "rollup-plugin-typescript2": "^0.32.1",
+    "run-z": "=1.10.0-bootstrap",
+    "shx": "^0.3.4",
+    "ts-jest": "^28.0.5",
+    "tslib": "^2.4.0",
+    "typedoc": "^0.22.17",
+    "typescript": "^4.7.4"
+  },
+  "scripts": {
+    "all": "run-z build,lint,test",
+    "bootstrap": "rollup -c",
+    "build": "run-z +z bootstrap",
+    "ci:all": "run-z all +test/--ci/--runInBand",
+    "clean": "run-z +z --then shx rm -rf dist target",
+    "doc": "run-z +z --then typedoc",
+    "doc:publish": "run-z doc --then gh-pages --dist target/typedoc --dotfiles",
+    "format": "run-z +z --then prettier --write \"**/*.{json,md}\"",
+    "lint": "run-z +z --then eslint .",
+    "test": "run-z +z env:NODE_OPTIONS=\"--experimental-vm-modules --no-warnings\" --then jest",
+    "z": "run-z +cmd:rollup,+cmd:typedoc,+cmd:eslint,+cmd:jest"
+  }
+}

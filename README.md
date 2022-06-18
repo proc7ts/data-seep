@@ -47,7 +47,7 @@ await withLogger(
             },
             async ({ request, response }) => {
               const id = parseInt(request.url.searchParams.get('id'));
-              const user = await db.query('SELECT name, email FROM value WHERE id = :id', { id });
+              const user = await db.query('SELECT name, email FROM user WHERE id = :id', { id });
 
               response.setHeader('Content-Type', 'application/json');
 
@@ -61,10 +61,7 @@ await withLogger(
             },
             async ({ request, response }) => {
               const user = JSON.parse(await request.read());
-              const { id } = await db.query(
-                'INSERT INTO value (name, email) VALUES (:name, :email) RETURNING id',
-                user,
-              );
+              const { id } = await db.query('INSERT INTO user (name, email) VALUES (:name, :email) RETURNING id', user);
 
               response.setHeader('Content-Type', 'application/json');
 

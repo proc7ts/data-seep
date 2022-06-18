@@ -30,7 +30,7 @@ export default {
     [
       'jest-junit',
       {
-        suiteName: '@proc7ts/async',
+        suiteName: 'All Tests',
         outputDirectory: './target/test-results',
         classNameTemplate: '{classname}: {title}',
         titleTemplate: '{classname}: {title}',

@@ -120,40 +120,14 @@ describe('withAll', () => {
     await promise;
     expect(sunk).toEqual({ some: 1, other: 2 });
   });
-  it('provides access to dependencies', async () => {
+  it('does nothing on supply cut off', async () => {
 
-    let sunk: { some: number; other: number } | undefined;
+    let sunk: { some: number } | undefined;
 
-    await withAll<{ some: number; other: number }>(
+    await expect(withAll<{ some: number }>(
         {
-          some: async (sink: DataSink<number>) => await withValue(13, sink),
-          other: async (
-              sink,
-              deps,
-          ) => await withValue((await deps.get('some')) ** 2, sink),
-        },
-        value => {
-          sunk = value;
-        },
-    );
-
-    expect(sunk).toEqual({ some: 13, other: 169 });
-  });
-  it('cancels dependencies acquiring when sunk', async () => {
-
-    let sunk: { some: number; other: number } | undefined;
-
-    await withAll<{ some: number; other: number }>(
-        {
-          some: async (
-              sink,
-              deps,
-          ) => await withValue((await deps.get('other')) ** 2, sink),
-          other: async (
-              _sink,
-              deps,
-          ) => {
-            deps.supply.off();
+          some: async (_sink, supply) => {
+            supply.off();
 
             return Promise.resolve();
           },
@@ -161,21 +135,21 @@ describe('withAll', () => {
         value => {
           sunk = value;
         },
-    );
+    )).resolves.toBeUndefined();
 
     expect(sunk).toBeUndefined();
   });
-  it('cancels dependencies acquiring on error', async () => {
+  it('fails on supply failure', async () => {
 
-    let sunk: { some: number; other: number } | undefined;
+    let sunk: { some: number } | undefined;
 
-    await expect(withAll<{ some: number; other: number }>(
+    await expect(withAll<{ some: number }>(
         {
-          some: async (
-              sink,
-              deps,
-          ) => await withValue((await deps.get('other')) ** 2, sink),
-          other: async () => Promise.reject('error'),
+          some: async (_sink, supply) => {
+            supply.off('error');
+
+            return Promise.resolve();
+          },
         },
         value => {
           sunk = value;
@@ -184,21 +158,13 @@ describe('withAll', () => {
 
     expect(sunk).toBeUndefined();
   });
-  it('cancels dependencies acquiring on supply failure', async () => {
+  it('fails on seep failure', async () => {
 
-    let sunk: { some: number; other: number } | undefined;
+    let sunk: { some: number } | undefined;
 
-    await expect(withAll<{ some: number; other: number }>(
+    await expect(withAll<{ some: number }>(
         {
-          some: async (
-              sink,
-              deps,
-          ) => await withValue((await deps.get('other')) ** 2, sink),
-          other: async (_sink, deps) => {
-            deps.supply.off('error');
-
-            return Promise.resolve();
-          },
+          some: async () => Promise.reject('error'),
         },
         value => {
           sunk = value;

@@ -25,8 +25,8 @@
   },
   "dependencies": {
     "@proc7ts/async": "^1.0.0-pre.4",
-    "@proc7ts/primitives": "4.0.0-pre.2",
-    "@proc7ts/supply": "2.0.0-pre.11"
+    "@proc7ts/primitives": "^4.0.0-pre.2",
+    "@proc7ts/supply": "^2.0.0-pre.12"
   },
   "devDependencies": {
     "@jest/globals": "^28.1.1",

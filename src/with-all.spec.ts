@@ -124,9 +124,9 @@ describe('withAll', () => {
 
     let sunk: { some: number } | undefined;
 
-    await expect(withAll<{ some: number }>(
+    await expect(withAll(
         {
-          some: async (_sink, supply) => {
+          some: async (_sink: DataSink<number>, supply) => {
             supply.off();
 
             return Promise.resolve();
@@ -143,9 +143,9 @@ describe('withAll', () => {
 
     let sunk: { some: number } | undefined;
 
-    await expect(withAll<{ some: number }>(
+    await expect(withAll(
         {
-          some: async (_sink, supply) => {
+          some: async (_sink: DataSink<number>, supply) => {
             supply.off('error');
 
             return Promise.resolve();
@@ -162,9 +162,9 @@ describe('withAll', () => {
 
     let sunk: { some: number } | undefined;
 
-    await expect(withAll<{ some: number }>(
+    await expect(withAll(
         {
-          some: async () => Promise.reject('error'),
+          some: async (_sink: DataSink<number>) => Promise.reject('error'),
         },
         value => {
           sunk = value;

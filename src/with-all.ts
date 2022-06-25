@@ -3,10 +3,12 @@ import { Supply } from '@proc7ts/supply';
 import { DataSink } from './data-sink.js';
 import { sinkValue } from './sink-value.js';
 
-export async function withAll<TResult extends WithAll.Result>(
-    sources: WithAll.Sources<TResult>,
-    sink: DataSink<TResult>,
+export async function withAll<TSourceMap extends WithAll.SourceMap>(
+    sources: TSourceMap,
+    sink: DataSink<WithAll.ResultType<TSourceMap>>,
 ): Promise<void> {
+
+  type TResult = WithAll.ResultType<TSourceMap>;
 
   const supply = new Supply();
   const whenDone = supply.whenDone();
@@ -56,13 +58,9 @@ export async function withAll<TResult extends WithAll.Result>(
     }
   };
 
-  keys.forEach(<TKey extends keyof TResult>(key: TKey) => {
+  keys.forEach(<TKey extends keyof TSourceMap>(key: TKey) => {
 
-    const source = sources[key] as ((
-        this: void,
-        sink: DataSink<TResult[TKey]>,
-        supply: Supply,
-    ) => Promise<void>) | undefined;
+    const source = sources[key] as WithAll.Source<TResult[TKey]> | undefined;
 
     if (!source) {
       --missing;
@@ -112,16 +110,16 @@ export async function withAll<TResult extends WithAll.Result>(
 
 export namespace WithAll {
 
-  export type Result = {
-    [key in PropertyKey]: unknown;
+  export type SourceMap = {
+    readonly [key in PropertyKey]: Source;
   };
 
-  export type Sources<TResult extends Result> = {
-    readonly [key in keyof TResult]: (
-        this: void,
-        sink: DataSink<TResult[key]>,
-        supply: Supply,
-    ) => Promise<void>;
+  export type Source<out T = unknown> = (this: void, sink: DataSink<T>, supply: Supply) => Promise<void>;
+
+  export type SourceValueType<TSource extends Source> = TSource extends Source<infer T> ? T : never;
+
+  export type ResultType<TSourceMap extends SourceMap> = {
+    [key in keyof TSourceMap]: SourceValueType<TSourceMap[key]>;
   };
 
 }

@@ -96,7 +96,7 @@ export async function withAll<TSourceMap extends WithAll.SourceMap>(
       await emit();
     };
 
-    source(sink, supply).then(() => supply.off(), error => supply.off(error));
+    source(sink, supply).then(() => supply.done(), error => supply.fail(error));
   });
 
   if (!missing) {

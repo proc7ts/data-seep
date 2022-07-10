@@ -2,14 +2,14 @@ import { Supply } from '@proc7ts/supply';
 import { DataFaucet, FaucetKind } from '../data-faucet.js';
 import { DataSink } from '../data-sink.js';
 import { sinkValue } from '../sink-value.js';
-import { DataSeep } from './data-seep.js';
+import { DataIntake, DataSeep } from './data-seep.js';
 import { DataSinkError } from './data-sink.error.js';
 import { DefaultDataSeep } from './default-data-seep.js';
 
 export class DataSeeper<TSeep extends DataSeep = DataSeep> {
 
   readonly #seepFactory: DataSeep.Factory<TSeep>;
-  readonly #intakes = new Map<FaucetKind<unknown, unknown[]>, DataSeep.Intake<unknown, unknown[], TSeep>>();
+  readonly #intakes = new Map<FaucetKind<unknown, unknown[]>, DataIntake<unknown, unknown[], TSeep>>();
 
   constructor(
       ...init: DataSeep extends DataSeep
@@ -23,9 +23,9 @@ export class DataSeeper<TSeep extends DataSeep = DataSeep> {
 
   assert<T, TOptions extends unknown[]>(
       kind: FaucetKind<T, TOptions>,
-      intake: DataSeep.Intake<T, TOptions, TSeep>,
+      intake: DataIntake<T, TOptions, TSeep>,
   ): this {
-    this.#intakes.set(kind as FaucetKind<unknown, unknown[]>, intake as DataSeep.Intake<unknown, unknown[], TSeep>);
+    this.#intakes.set(kind as FaucetKind<unknown, unknown[]>, intake as DataIntake<unknown, unknown[], TSeep>);
 
     return this;
   }
@@ -41,12 +41,12 @@ export class DataSeeper<TSeep extends DataSeep = DataSeep> {
 
 class DataSeep$Seeper<TSeep extends DataSeep> implements DataSeep.Seeper<TSeep> {
 
-  readonly #intakes = new Map<FaucetKind<unknown, unknown[]>, DataSeep.Intake<unknown, unknown[], TSeep>>();
+  readonly #intakes = new Map<FaucetKind<unknown, unknown[]>, DataIntake<unknown, unknown[], TSeep>>();
   readonly #supply: Supply;
   readonly #faucets = new Map<FaucetKind<unknown, unknown[]>, DataFaucet<unknown>>();
 
   constructor(
-      intakes: Map<FaucetKind<unknown, unknown[]>, DataSeep.Intake<unknown, unknown[], TSeep>>,
+      intakes: Map<FaucetKind<unknown, unknown[]>, DataIntake<unknown, unknown[], TSeep>>,
       supply: Supply,
   ) {
     this.#intakes = intakes;
@@ -64,9 +64,11 @@ class DataSeep$Seeper<TSeep extends DataSeep> implements DataSeep.Seeper<TSeep> 
     let faucet = this.#faucets.get(kind as FaucetKind<unknown, unknown[]>) as DataFaucet<T> | undefined;
 
     if (!faucet) {
-      const intake = this.#intakes.get(kind as FaucetKind<unknown, unknown[]>) as DataSeep.Intake<T, TOptions, TSeep>;
+
+      const intake = this.#intakes.get(kind as FaucetKind<unknown, unknown[]>) as DataIntake<T, TOptions, TSeep>;
 
       if (intake) {
+
         const intakeFaucet = intake(kind, seep);
 
         faucet = async (sink, supply = new Supply()) => {

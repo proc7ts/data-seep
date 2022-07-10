@@ -7,10 +7,10 @@ export abstract class DataSeep {
 
 }
 
-export namespace DataSeep {
+export type DataIntake<in out T, out TOptions extends unknown[] = [], TSeep extends DataSeep = DataSeep> =
+    (kind: FaucetKind<T, TOptions>, seep: TSeep) => IntakeFaucet<T>;
 
-  export type Intake<in out T, out TOptions extends unknown[], TSeep extends DataSeep = DataSeep> =
-      (kind: FaucetKind<T, TOptions>, seep: TSeep) => IntakeFaucet<T>;
+export namespace DataSeep {
 
   export type Factory<TSeep extends DataSeep = DataSeep> = (seeper: Seeper<TSeep>) => IntakeFaucet<TSeep>;
 

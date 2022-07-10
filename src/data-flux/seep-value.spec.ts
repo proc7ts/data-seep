@@ -1,20 +1,20 @@
 import { describe, expect, it } from '@jest/globals';
 import { DataFaucet } from '../data-faucet.js';
 import { withValue } from '../with-value.js';
-import { DataSeeper } from './data-seeper.js';
+import { DataAssertions } from './data-assertions.js';
 import { seepValue } from './seep-value.js';
 
 describe('seepValue', () => {
   it('seeps the given value', async () => {
 
-    const seeper = new DataSeeper();
+    const assertions = new DataAssertions();
 
-    seeper.assert(withTestData, seepValue(123));
+    assertions.assert(withTestData, seepValue(123));
 
     let sunk: number | undefined;
 
-    await seeper.with(async seep => {
-      await seep.do(withTestData)(value => {
+    await assertions.with(async flux => {
+      await flux.flow(withTestData)(value => {
         sunk = value;
       });
     });

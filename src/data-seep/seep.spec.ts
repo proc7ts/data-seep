@@ -2,14 +2,14 @@ import { describe, expect, it } from '@jest/globals';
 import { DataFaucet } from '../data-faucet.js';
 import { withValue } from '../with-value.js';
 import { DataSeeper } from './data-seeper.js';
-import { seepValue } from './seep-value.js';
+import { seep } from './seep.js';
 
-describe('seepValue', () => {
-  it('seeps the given value', async () => {
+describe('seep', () => {
+  it('seeps with the given options', async () => {
 
     const seeper = new DataSeeper();
 
-    seeper.assert(withTestData, seepValue(123));
+    seeper.assert(withTestData, seep(12, 34));
 
     let sunk: number | undefined;
 
@@ -19,10 +19,10 @@ describe('seepValue', () => {
       });
     });
 
-    expect(sunk).toBe(123);
+    expect(sunk).toBe(46);
   });
 
-  function withTestData(): DataFaucet<number> {
-    return withValue(0);
+  function withTestData(first: number, second: number): DataFaucet<number> {
+    return withValue(first + second);
   }
 });

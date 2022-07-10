@@ -1,21 +1,21 @@
 import { noop } from '@proc7ts/primitives';
 import { Supply } from '@proc7ts/supply';
-import { DataFaucet, FaucetValueType, InputFaucet } from './data-faucet.js';
+import { DataFaucet, FaucetSeepType, IntakeFaucet } from './data-faucet.js';
 import { DataSink } from './data-sink.js';
 import { sinkValue } from './sink-value.js';
 
-export function withAll<TInputMap extends WithAll.InputMap>(
-    inputs: TInputMap,
-): DataFaucet<WithAll.ResultType<TInputMap>> {
+export function withAll<TIntakes extends WithAll.Intakes>(
+    intakes: TIntakes,
+): DataFaucet<WithAll.SeepType<TIntakes>> {
 
-  type TResult = WithAll.ResultType<TInputMap>;
+  type TSeep = WithAll.SeepType<TIntakes>;
 
   return async (sink, supply = new Supply()) => {
 
     const whenDone = supply.whenDone();
-    let prevValues: Partial<TResult> = {};
-    let values: Partial<TResult> | null = null;
-    const keys = Reflect.ownKeys(inputs);
+    let prevValues: Partial<TSeep> = {};
+    let values: Partial<TSeep> | null = null;
+    const keys = Reflect.ownKeys(intakes);
 
     let missing = keys.length;
     let ready: () => void = noop;
@@ -36,15 +36,15 @@ export function withAll<TInputMap extends WithAll.InputMap>(
         await whenReady;
       }
 
-      // Prevent values from overriding while sinking them
-      let newValues: TResult;
+      // Prevent values from overriding while sinking them.
+      let newValues: TSeep;
 
       if (values) {
-        newValues = values as TResult;
+        newValues = values as TSeep;
         prevValues = values;
         values = null;
       } else {
-        newValues = prevValues as TResult;
+        newValues = prevValues as TSeep;
       }
 
       try {
@@ -58,18 +58,18 @@ export function withAll<TInputMap extends WithAll.InputMap>(
       }
     };
 
-    keys.forEach(<TKey extends keyof TInputMap>(key: TKey) => {
+    keys.forEach(<TKey extends keyof TIntakes>(key: TKey) => {
 
-      const input = inputs[key] as InputFaucet<TResult[TKey]> | undefined;
+      const intake = intakes[key] as IntakeFaucet<TSeep[TKey]> | undefined;
 
-      if (!input) {
+      if (!intake) {
         --missing;
 
         return;
       }
 
       let valueCount = 0;
-      const sink: DataSink<TResult[TKey]> = async (value, valueSupply): Promise<void> => {
+      const sink: DataSink<TSeep[TKey]> = async (value, valueSupply): Promise<void> => {
         if (values) {
           values[key] = value;
         } else {
@@ -96,7 +96,7 @@ export function withAll<TInputMap extends WithAll.InputMap>(
         await emit();
       };
 
-      input(sink, supply).then(() => supply.done(), error => supply.fail(error));
+      intake(sink, supply).then(() => supply.done(), error => supply.fail(error));
     });
 
     if (!missing) {
@@ -111,12 +111,12 @@ export function withAll<TInputMap extends WithAll.InputMap>(
 
 export namespace WithAll {
 
-  export type InputMap = {
-    readonly [key in PropertyKey]: InputFaucet<unknown>;
+  export type Intakes = {
+    readonly [key in PropertyKey]: IntakeFaucet<unknown>;
   };
 
-  export type ResultType<TInputMap extends InputMap> = {
-    [key in keyof TInputMap]: FaucetValueType<TInputMap[key]>;
+  export type SeepType<TInputMap extends Intakes> = {
+    [key in keyof TInputMap]: FaucetSeepType<TInputMap[key]>;
   };
 
 }

@@ -6,7 +6,7 @@ import { withAll } from './with-all.js';
 import { withValue } from './with-value.js';
 
 describe('withAll', () => {
-  it('seeps empty object without sources', async () => {
+  it('seeps empty object without intakes', async () => {
 
     let sunk: unknown;
 
@@ -16,7 +16,7 @@ describe('withAll', () => {
 
     expect(sunk).toEqual({});
   });
-  it('seeps empty object with only undefined sources', async () => {
+  it('seeps empty object with only undefined intakes', async () => {
 
     let sunk: unknown;
 

@@ -6,7 +6,7 @@ describe('withValue', () => {
 
     let sunk: number | undefined;
 
-    await withValue(13, value => {
+    await withValue(13)(value => {
       sunk = value ** 2;
     });
 

@@ -1,111 +1,112 @@
 import { noop } from '@proc7ts/primitives';
 import { Supply } from '@proc7ts/supply';
+import { DataFaucet } from './data-faucet.js';
 import { DataSink } from './data-sink.js';
 import { sinkValue } from './sink-value.js';
 
-export async function withAll<TSourceMap extends WithAll.SourceMap>(
+export function withAll<TSourceMap extends WithAll.SourceMap>(
     sources: TSourceMap,
-    sink: DataSink<WithAll.ResultType<TSourceMap>>,
-): Promise<void> {
+): DataFaucet<WithAll.ResultType<TSourceMap>> {
 
   type TResult = WithAll.ResultType<TSourceMap>;
 
-  const supply = new Supply();
-  const whenDone = supply.whenDone();
-  let prevValues: Partial<TResult> = {};
-  let values: Partial<TResult> | null = null;
-  const keys = Reflect.ownKeys(sources);
+  return async (sink, supply = new Supply()) => {
 
-  let missing = keys.length;
-  let ready: () => void = noop;
-  let whenReady: Promise<void> | null = null;
-  const emit = async (): Promise<void> => {
-    if (!missing) {
-      ready();
-    } else {
-      if (!whenReady) {
-        whenReady = new Promise<void>(resolve => {
-          ready = resolve;
-        }).then(() => {
-          ready = noop;
-          whenReady = null;
-        });
-      }
+    const whenDone = supply.whenDone();
+    let prevValues: Partial<TResult> = {};
+    let values: Partial<TResult> | null = null;
+    const keys = Reflect.ownKeys(sources);
 
-      await whenReady;
-    }
-
-
-    // Prevent values from overriding while sinking them
-    let newValues: TResult;
-
-    if (values) {
-      newValues = values as TResult;
-      prevValues = values;
-      values = null;
-    } else {
-      newValues = prevValues as TResult;
-    }
-
-    try {
-      await sinkValue(newValues, sink, new Supply().needs(supply));
-    } finally {
-      if (!values && prevValues === newValues) {
-        // Values not altered while sinking.
-        values = prevValues;
-        prevValues = {};
-      }
-    }
-  };
-
-  keys.forEach(<TKey extends keyof TSourceMap>(key: TKey) => {
-
-    const source = sources[key] as WithAll.Source<TResult[TKey]> | undefined;
-
-    if (!source) {
-      --missing;
-
-      return;
-    }
-
-    let valueCount = 0;
-    const sink: DataSink<TResult[TKey]> = async (value, valueSupply): Promise<void> => {
-      if (values) {
-        values[key] = value;
+    let missing = keys.length;
+    let ready: () => void = noop;
+    let whenReady: Promise<void> | null = null;
+    const emit = async (): Promise<void> => {
+      if (!missing) {
+        ready();
       } else {
-        // Values currently sinking. Clone previous ones.
-        values = {
-          ...prevValues,
-          [key]: value,
-        };
-      }
-
-      let firstValue = !valueCount++;
-
-      valueSupply.needs(supply).whenOff(() => {
-        if (!--valueCount) {
-          firstValue = false;
-          ++missing;
+        if (!whenReady) {
+          whenReady = new Promise<void>(resolve => {
+            ready = resolve;
+          }).then(() => {
+            ready = noop;
+            whenReady = null;
+          });
         }
-      });
 
-      if (firstValue) {
-        --missing;
+        await whenReady;
       }
 
-      await emit();
+      // Prevent values from overriding while sinking them
+      let newValues: TResult;
+
+      if (values) {
+        newValues = values as TResult;
+        prevValues = values;
+        values = null;
+      } else {
+        newValues = prevValues as TResult;
+      }
+
+      try {
+        await sinkValue(newValues, sink, new Supply().needs(supply));
+      } finally {
+        if (!values && prevValues === newValues) {
+          // Values not altered while sinking.
+          values = prevValues;
+          prevValues = {};
+        }
+      }
     };
 
-    source(sink, supply).then(() => supply.done(), error => supply.fail(error));
-  });
+    keys.forEach(<TKey extends keyof TSourceMap>(key: TKey) => {
 
-  if (!missing) {
-    // No sources. Emit once then finish.
-    await emit();
-    supply.off();
-  }
+      const source = sources[key] as WithAll.Source<TResult[TKey]> | undefined;
 
-  return await whenDone;
+      if (!source) {
+        --missing;
+
+        return;
+      }
+
+      let valueCount = 0;
+      const sink: DataSink<TResult[TKey]> = async (value, valueSupply): Promise<void> => {
+        if (values) {
+          values[key] = value;
+        } else {
+          // Values currently sinking. Clone previous ones.
+          values = {
+            ...prevValues,
+            [key]: value,
+          };
+        }
+
+        let firstValue = !valueCount++;
+
+        valueSupply.needs(supply).whenOff(() => {
+          if (!--valueCount) {
+            firstValue = false;
+            ++missing;
+          }
+        });
+
+        if (firstValue) {
+          --missing;
+        }
+
+        await emit();
+      };
+
+      source(sink, supply).then(() => supply.done(), error => supply.fail(error));
+    });
+
+    if (!missing) {
+      // No sources. Emit once then finish.
+      await emit();
+      supply.off();
+    }
+
+    return await whenDone;
+  };
 }
 
 export namespace WithAll {

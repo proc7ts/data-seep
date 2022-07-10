@@ -10,7 +10,7 @@ describe('withAll', () => {
 
     let sunk: unknown;
 
-    await withAll({}, (value: unknown) => {
+    await withAll({})((value: unknown) => {
       sunk = value;
     });
 
@@ -20,7 +20,9 @@ describe('withAll', () => {
 
     let sunk: unknown;
 
-    await withAll({ some: undefined! }, (value: unknown) => {
+    await withAll({
+      some: undefined!,
+    })((value: unknown) => {
       sunk = value;
     });
 
@@ -30,14 +32,11 @@ describe('withAll', () => {
 
     let sunk: { some: number } | undefined;
 
-    await withAll(
-        {
-          some: async (sink: DataSink<number>) => await withValue(13, sink),
-        },
-        value => {
-          sunk = value;
-        },
-    );
+    await withAll({
+      some: withValue(13),
+    })(value => {
+      sunk = value;
+    });
 
     expect(sunk).toEqual({ some: 13 });
   });
@@ -45,18 +44,15 @@ describe('withAll', () => {
 
     const sunk: { some: number }[] = [];
 
-    await withAll(
-        {
-          some: async (sink: DataSink<number>) => {
-            await sinkValue(1, sink);
-            await sinkValue(2, sink);
-            await sinkValue(3, sink);
-          },
-        },
-        value => {
-          sunk.push({ ...value });
-        },
-    );
+    await withAll({
+      some: async (sink: DataSink<number>) => {
+        await sinkValue(1, sink);
+        await sinkValue(2, sink);
+        await sinkValue(3, sink);
+      },
+    })(value => {
+      sunk.push({ ...value });
+    });
 
     expect(sunk).toEqual([{ some: 1 }, { some: 2 }, { some: 3 }]);
   });
@@ -64,15 +60,12 @@ describe('withAll', () => {
 
     let sunk: { some: number; other: number } | undefined;
 
-    await withAll(
-        {
-          some: async (sink: DataSink<number>) => await withValue(13, sink),
-          other: async (sink: DataSink<number>) => await withValue(31, sink),
-        },
-        value => {
-          sunk = value;
-        },
-    );
+    await withAll({
+      some: withValue(13),
+      other: withValue(31),
+    })(value => {
+      sunk = value;
+    });
 
     expect(sunk).toEqual({ some: 13, other: 31 });
   });
@@ -81,15 +74,12 @@ describe('withAll', () => {
     const first = new PromiseResolver<number>();
     let sunk: { some: number; other: number } | undefined;
 
-    const promise = withAll(
-        {
-          some: async (sink: DataSink<number>) => await withValue(first.whenDone(), sink),
-          other: async (sink: DataSink<number>) => await withValue(2, sink),
-        },
-        value => {
-          sunk = value;
-        },
-    );
+    const promise = withAll({
+      some: withValue(first.whenDone()),
+      other: withValue(2),
+    })(value => {
+      sunk = value;
+    });
 
     await new Promise<void>(resolve => setTimeout(resolve, 1));
     expect(sunk).toBeUndefined();
@@ -103,15 +93,12 @@ describe('withAll', () => {
     const second = new PromiseResolver<number>();
     let sunk: { some: number; other: number } | undefined;
 
-    const promise = withAll(
-        {
-          some: async (sink: DataSink<number>) => await withValue(1, sink),
-          other: async (sink: DataSink<number>) => await withValue(second.whenDone(), sink),
-        },
-        value => {
-          sunk = value;
-        },
-    );
+    const promise = withAll({
+      some: withValue(1),
+      other: withValue(second.whenDone()),
+    })(value => {
+      sunk = value;
+    });
 
     await new Promise<void>(resolve => setTimeout(resolve, 1));
     expect(sunk).toBeUndefined();
@@ -124,18 +111,15 @@ describe('withAll', () => {
 
     let sunk: { some: number } | undefined;
 
-    await expect(withAll(
-        {
-          some: async (_sink: DataSink<number>, supply) => {
-            supply.off();
+    await expect(withAll({
+      some: async (_sink: DataSink<number>, supply) => {
+        supply.off();
 
-            return Promise.resolve();
-          },
-        },
-        value => {
-          sunk = value;
-        },
-    )).resolves.toBeUndefined();
+        return Promise.resolve();
+      },
+    })(value => {
+      sunk = value;
+    })).resolves.toBeUndefined();
 
     expect(sunk).toBeUndefined();
   });
@@ -143,18 +127,15 @@ describe('withAll', () => {
 
     let sunk: { some: number } | undefined;
 
-    await expect(withAll(
-        {
-          some: async (_sink: DataSink<number>, supply) => {
-            supply.off('error');
+    await expect(withAll({
+      some: async (_sink: DataSink<number>, supply) => {
+        supply.off('error');
 
-            return Promise.resolve();
-          },
-        },
-        value => {
-          sunk = value;
-        },
-    )).rejects.toBe('error');
+        return Promise.resolve();
+      },
+    })(value => {
+      sunk = value;
+    })).rejects.toBe('error');
 
     expect(sunk).toBeUndefined();
   });
@@ -162,14 +143,11 @@ describe('withAll', () => {
 
     let sunk: { some: number } | undefined;
 
-    await expect(withAll(
-        {
-          some: async (_sink: DataSink<number>) => Promise.reject('error'),
-        },
-        value => {
-          sunk = value;
-        },
-    )).rejects.toBe('error');
+    await expect(withAll({
+      some: async (_sink: DataSink<number>) => Promise.reject('error'),
+    })(value => {
+      sunk = value;
+    })).rejects.toBe('error');
 
     expect(sunk).toBeUndefined();
   });

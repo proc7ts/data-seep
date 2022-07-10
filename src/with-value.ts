@@ -1,8 +1,6 @@
-import { DataSink } from './data-sink.js';
+import { DataFaucet } from './data-faucet.js';
 import { sinkValue } from './sink-value.js';
 
-export async function withValue<T>(value: T | PromiseLike<T>, sink: DataSink<T>): Promise<void> {
-  await sinkValue(value, async (value, supply) => {
-    await sink(value, supply);
-  });
+export function withValue<T>(value: T | PromiseLike<T>): DataFaucet<T> {
+  return async (sink, supply) => await sinkValue(value, sink, supply);
 }

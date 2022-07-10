@@ -6,6 +6,10 @@ export async function sinkValue<T>(
     sink: DataSink<T>,
     supply: Supply = new Supply(),
 ): Promise<void> {
+  if (supply.isOff) {
+    return await supply.whenDone();
+  }
+
   const whenReturned = async (): Promise<void> => {
 
     const supplier = await sink(await value, supply);

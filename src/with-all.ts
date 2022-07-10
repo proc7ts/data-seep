@@ -1,21 +1,21 @@
 import { noop } from '@proc7ts/primitives';
 import { Supply } from '@proc7ts/supply';
-import { DataFaucet } from './data-faucet.js';
+import { DataFaucet, FaucetValueType, InputFaucet } from './data-faucet.js';
 import { DataSink } from './data-sink.js';
 import { sinkValue } from './sink-value.js';
 
-export function withAll<TSourceMap extends WithAll.SourceMap>(
-    sources: TSourceMap,
-): DataFaucet<WithAll.ResultType<TSourceMap>> {
+export function withAll<TInputMap extends WithAll.InputMap>(
+    inputs: TInputMap,
+): DataFaucet<WithAll.ResultType<TInputMap>> {
 
-  type TResult = WithAll.ResultType<TSourceMap>;
+  type TResult = WithAll.ResultType<TInputMap>;
 
   return async (sink, supply = new Supply()) => {
 
     const whenDone = supply.whenDone();
     let prevValues: Partial<TResult> = {};
     let values: Partial<TResult> | null = null;
-    const keys = Reflect.ownKeys(sources);
+    const keys = Reflect.ownKeys(inputs);
 
     let missing = keys.length;
     let ready: () => void = noop;
@@ -58,11 +58,11 @@ export function withAll<TSourceMap extends WithAll.SourceMap>(
       }
     };
 
-    keys.forEach(<TKey extends keyof TSourceMap>(key: TKey) => {
+    keys.forEach(<TKey extends keyof TInputMap>(key: TKey) => {
 
-      const source = sources[key] as WithAll.Source<TResult[TKey]> | undefined;
+      const input = inputs[key] as InputFaucet<TResult[TKey]> | undefined;
 
-      if (!source) {
+      if (!input) {
         --missing;
 
         return;
@@ -96,11 +96,11 @@ export function withAll<TSourceMap extends WithAll.SourceMap>(
         await emit();
       };
 
-      source(sink, supply).then(() => supply.done(), error => supply.fail(error));
+      input(sink, supply).then(() => supply.done(), error => supply.fail(error));
     });
 
     if (!missing) {
-      // No sources. Emit once then finish.
+      // No inputs. Emit once then finish.
       await emit();
       supply.off();
     }
@@ -111,16 +111,12 @@ export function withAll<TSourceMap extends WithAll.SourceMap>(
 
 export namespace WithAll {
 
-  export type SourceMap = {
-    readonly [key in PropertyKey]: Source;
+  export type InputMap = {
+    readonly [key in PropertyKey]: InputFaucet<unknown>;
   };
 
-  export type Source<out T = unknown> = (this: void, sink: DataSink<T>, supply: Supply) => Promise<void>;
-
-  export type SourceValueType<TSource extends Source> = TSource extends Source<infer T> ? T : never;
-
-  export type ResultType<TSourceMap extends SourceMap> = {
-    [key in keyof TSourceMap]: SourceValueType<TSourceMap[key]>;
+  export type ResultType<TInputMap extends InputMap> = {
+    [key in keyof TInputMap]: FaucetValueType<TInputMap[key]>;
   };
 
 }

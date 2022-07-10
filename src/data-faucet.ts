@@ -1,10 +1,9 @@
 import { Supply } from '@proc7ts/supply';
 import { DataSink } from './data-sink.js';
 
-export type DataFaucet<out TOut> = (sink: DataSink<TOut>, supply?: Supply) => Promise<void>;
+export type DataFaucet<out T> = (sink: DataSink<T>, supply?: Supply) => Promise<void>;
 
-export namespace DataFaucet {
+export type InputFaucet<out T> = (sink: DataSink<T>, supply: Supply) => Promise<void>;
 
-  export type ValueType<TFaucet extends DataFaucet<unknown>> = TFaucet extends DataFaucet<infer T> ? T : never;
-
-}
+export type FaucetValueType<TFaucet extends InputFaucet<unknown>> =
+    TFaucet extends (sink: DataSink<infer T>) => Promise<void> ? T : never;

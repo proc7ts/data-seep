@@ -115,8 +115,8 @@ export namespace WithAll {
     readonly [key in PropertyKey]: IntakeFaucet<unknown>;
   };
 
-  export type SeepType<TInputMap extends Intakes> = {
-    [key in keyof TInputMap]: FaucetSeepType<TInputMap[key]>;
+  export type SeepType<TIntakes extends Intakes> = {
+    [key in keyof TIntakes]: FaucetSeepType<TIntakes[key]>;
   };
 
 }

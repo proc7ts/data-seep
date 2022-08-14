@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from '@jest/globals';
-import { DataFaucet, FaucetKind } from '../data-faucet.js';
+import { DataFaucet } from '../data-faucet.js';
+import { DataInfusion } from '../data-infusion.js';
 import { withValue } from '../with-value.js';
 import { DataSinkError } from './data-sink.error.js';
 
@@ -11,7 +12,7 @@ describe('DataSinkError', () => {
     error = new DataSinkError(
         undefined,
         {
-          faucetKind: withTestData as FaucetKind<unknown, unknown[]>,
+          infusion: withTestData as DataInfusion<unknown, unknown[]>,
         },
     );
   });
@@ -28,7 +29,7 @@ describe('DataSinkError', () => {
   });
   describe('faucetKind', () => {
     it('is set to initial value', () => {
-      expect(error.faucetKind).toBe(withTestData);
+      expect(error.infusion).toBe(withTestData);
     });
   });
 

@@ -1,20 +1,20 @@
 import { describe, expect, it } from '@jest/globals';
 import { DataFaucet } from '../data-faucet.js';
 import { withValue } from '../with-value.js';
-import { DataAssertions } from './data-assertions.js';
+import { DataMixer } from './data-mixer.js';
 import { seep } from './seep.js';
 
 describe('seep', () => {
   it('seeps with the given options', async () => {
 
-    const assertions = new DataAssertions();
+    const mixer = new DataMixer();
 
-    assertions.assert(withTestData, seep(12, 34));
+    mixer.mix(withTestData, seep(12, 34));
 
     let sunk: number | undefined;
 
-    await assertions.with(async flux => {
-      await flux.flow(withTestData)(value => {
+    await mixer.with(async mix => {
+      await mix.flow(withTestData)(value => {
         sunk = value;
       });
     });

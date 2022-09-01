@@ -5,7 +5,6 @@ export class DataSinkError extends ReferenceError {
   readonly #infusion: DataInfusion<unknown, unknown[]>;
 
   constructor(message: string | undefined, options: DataSeepErrorOptions) {
-
     const { infusion } = options;
 
     super(message ?? `Can not sink ${infusion.name}`, options);
@@ -21,7 +20,5 @@ export class DataSinkError extends ReferenceError {
 }
 
 export interface DataSeepErrorOptions extends ErrorOptions {
-
   readonly infusion: DataInfusion<unknown, unknown[]>;
-
 }

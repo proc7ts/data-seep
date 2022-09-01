@@ -3,7 +3,6 @@ import { withValue } from './with-value.js';
 
 describe('withValue', () => {
   it('seeps value', async () => {
-
     let sunk: number | undefined;
 
     await withValue(13)(value => {

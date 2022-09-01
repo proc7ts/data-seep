@@ -6,7 +6,6 @@ import { seepValue } from './seep-value.js';
 
 describe('seepValue', () => {
   it('seeps the given value', async () => {
-
     const mixer = new DataMixer();
 
     mixer.mix(withTestData, seepValue(123));

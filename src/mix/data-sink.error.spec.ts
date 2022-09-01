@@ -5,16 +5,12 @@ import { withValue } from '../with-value.js';
 import { DataSinkError } from './data-sink.error.js';
 
 describe('DataSinkError', () => {
-
   let error: DataSinkError;
 
   beforeEach(() => {
-    error = new DataSinkError(
-        undefined,
-        {
-          infusion: withTestData as DataInfusion<unknown, unknown[]>,
-        },
-    );
+    error = new DataSinkError(undefined, {
+      infusion: withTestData as DataInfusion<unknown, unknown[]>,
+    });
   });
 
   describe('name', () => {

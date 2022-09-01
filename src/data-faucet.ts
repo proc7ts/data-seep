@@ -5,5 +5,8 @@ export type DataFaucet<out T> = (sink: DataSink<T>, supply?: Supply) => Promise<
 
 export type IntakeFaucet<out T> = (sink: DataSink<T>, supply: Supply) => Promise<void>;
 
-export type FaucetSeepType<TFaucet extends IntakeFaucet<unknown>> =
-    TFaucet extends (sink: DataSink<infer T>) => Promise<void> ? T : never;
+export type FaucetSeepType<TFaucet extends IntakeFaucet<unknown>> = TFaucet extends (
+  sink: DataSink<infer T>,
+) => Promise<void>
+  ? T
+  : never;

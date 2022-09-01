@@ -6,7 +6,6 @@ import { sinkValue } from './sink-value.js';
 
 describe('sinkValue', () => {
   it('sinks data synchronously', async () => {
-
     const { resolve, whenDone } = new PromiseResolver<void>();
     let sunk: number | undefined;
 
@@ -25,7 +24,6 @@ describe('sinkValue', () => {
     expect(sunk).toBe(13);
   });
   it('resolves when data sunk', async () => {
-
     const { resolve, whenDone } = new PromiseResolver<void>();
     let sunk: number | undefined;
 
@@ -48,7 +46,6 @@ describe('sinkValue', () => {
     expect(returned).toBe(true);
   });
   it('resolves when processing supply cut off', async () => {
-
     const supply = new Supply();
     let sunk: number | undefined;
 
@@ -72,7 +69,6 @@ describe('sinkValue', () => {
     expect(returned).toBe(true);
   });
   it('resolves when inflow supply completed', async () => {
-
     const inflowSupply = new Supply();
     const { resolve, whenDone } = new PromiseResolver<void>();
     let sunk: number | undefined;
@@ -100,7 +96,6 @@ describe('sinkValue', () => {
     expect(sunk).toBe(-13);
   });
   it('rejects when inflow supply failed', async () => {
-
     const inflowSupply = new Supply();
     const { resolve, whenDone } = new PromiseResolver<void>();
     let sunk: number | undefined;

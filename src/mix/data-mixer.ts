@@ -4,16 +4,29 @@ import { DataInfusion } from '../data-infusion.js';
 import { DataSink } from '../data-sink.js';
 import { sinkValue } from '../sink-value.js';
 import { DataCompound, DataCompounder } from './data-compound.js';
+import { DataInfusionError } from './data-infusion.error.js';
 import { DataMix } from './data-mix.js';
 import { DataSeep } from './data-seep.js';
-import { DataSinkError } from './data-sink.error.js';
 import { DefaultDataMix } from './default-data-mix.js';
 
+/**
+ * Data mixer allows to mix data originated from different {@link DataInfusions infusions},
+ *
+ * The resulting {@link DataMix data mix} may be used to pour the infused data.
+ *
+ * @typeParam TMix - Type of resulting data mix.
+ */
 export class DataMixer<TMix extends DataMix = DataMix> {
 
   readonly #compounder: DataCompounder<TMix>;
   readonly #seeps = new Map<DataInfusion<unknown, unknown[]>, DataSeep<unknown, unknown[], TMix>>();
 
+  /**
+   * Constructs data mixer.
+   *
+   * @param init - Initialization tuple containing mized data compounder. The one puring {@link DefaultDataMix} will be
+   * used when omitted.
+   */
   constructor(
     ...init: DataMix extends TMix
       ? [compounder?: DataCompounder<TMix>]
@@ -24,7 +37,19 @@ export class DataMixer<TMix extends DataMix = DataMix> {
     this.#compounder = compounder;
   }
 
-  mix<T, TOptions extends unknown[]>(
+  /**
+   * Infuses the mix with the given data `infusion`.
+   *
+   * The infused data will be available in the {@link mix resulting data mix}.
+   *
+   * @typeParam T - Infused data type. I.e. the type of data poured by created faucet.
+   * @typeParam TOptions - Tuple type representing infusion options.
+   * @param infusion - Source data infusion.
+   * @param seep - Source data seep.
+   *
+   * @returns `this` instance.
+   */
+  infuse<T, TOptions extends unknown[]>(
     infusion: DataInfusion<T, TOptions>,
     seep: DataSeep<T, TOptions, TMix>,
   ): this {
@@ -36,10 +61,24 @@ export class DataMixer<TMix extends DataMix = DataMix> {
     return this;
   }
 
-  async with(sink: DataSink<TMix>, supply: Supply = new Supply()): Promise<void> {
-    const mix = this.#compounder(new DataMix$Compound(this.#seeps, supply));
+  /**
+   * Mixes infused data and purs the result data mix to the given `sink`.
+   *
+   * @param sink - Target sink of data mix.
+   * @param sinkSupply - Optional data mix `sink` supply. When cut off the mix should not be poured to target `sink`.
+   *
+   * @returns Promise resolved when the mix poured and sank.
+   */
+  async mix(sink: DataSink<TMix>, sinkSupply: Supply = new Supply()): Promise<void> {
+    const compound = new DataMix$Compound(this.#seeps, sinkSupply);
 
-    await mix(sink, supply);
+    try {
+      const mixFaucet = this.#compounder(compound);
+
+      await mixFaucet(sink, sinkSupply);
+    } finally {
+      compound.supply.off();
+    }
   }
 
 }
@@ -77,12 +116,12 @@ class DataMix$Compound<TMix extends DataMix> implements DataCompound<TMix> {
       if (seep) {
         const seepFaucet = seep(infusion, mix);
 
-        faucet = async (sink, supply = new Supply()) => {
-          await seepFaucet(sink, supply.needs(this.#supply));
+        faucet = async (sink, sinkSpply = new Supply()) => {
+          await seepFaucet(sink, sinkSpply.needs(this.#supply));
         };
       } else {
         faucet = () => Promise.reject(
-            new DataSinkError(undefined, {
+            new DataInfusionError(undefined, {
               infusion: infusion as DataInfusion<unknown, unknown[]>,
             }),
           );

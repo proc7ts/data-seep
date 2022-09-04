@@ -8,17 +8,17 @@ describe('seepValue', () => {
   it('seeps the given value', async () => {
     const mixer = new DataMixer();
 
-    mixer.mix(withTestData, seepValue(123));
+    mixer.infuse(withTestData, seepValue(123));
 
-    let sunk: number | undefined;
+    let sank: number | undefined;
 
-    await mixer.with(async mix => {
-      await mix.flow(withTestData)(value => {
-        sunk = value;
+    await mixer.mix(async mix => {
+      await mix.pour(withTestData)(value => {
+        sank = value;
       });
     });
 
-    expect(sunk).toBe(123);
+    expect(sank).toBe(123);
   });
 
   function withTestData(): DataFaucet<number> {

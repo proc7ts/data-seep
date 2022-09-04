@@ -2,25 +2,25 @@ import { beforeEach, describe, expect, it } from '@jest/globals';
 import { DataFaucet } from '../data-faucet.js';
 import { DataInfusion } from '../data-infusion.js';
 import { withValue } from '../with-value.js';
-import { DataSinkError } from './data-sink.error.js';
+import { DataInfusionError } from './data-infusion.error.js';
 
-describe('DataSinkError', () => {
-  let error: DataSinkError;
+describe('DataInfusionError', () => {
+  let error: DataInfusionError;
 
   beforeEach(() => {
-    error = new DataSinkError(undefined, {
+    error = new DataInfusionError(undefined, {
       infusion: withTestData as DataInfusion<unknown, unknown[]>,
     });
   });
 
   describe('name', () => {
     it('is `DataSinkError`', () => {
-      expect(error.name).toBe('DataSinkError');
+      expect(error.name).toBe('DataInfusionError');
     });
   });
   describe('message', () => {
     it('has default value', () => {
-      expect(error.message).toBe(`Can not sink withTestData`);
+      expect(error.message).toBe(`Not infused withTestData`);
     });
   });
   describe('faucetKind', () => {

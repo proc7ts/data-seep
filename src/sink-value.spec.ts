@@ -7,28 +7,28 @@ import { sinkValue } from './sink-value.js';
 describe('sinkValue', () => {
   it('sinks data synchronously', async () => {
     const { resolve, whenDone } = new PromiseResolver<void>();
-    let sunk: number | undefined;
+    let sank: number | undefined;
 
     const sink: DataSink<number> = async value => {
       await whenDone();
-      sunk = value;
+      sank = value;
     };
 
     const promise = sinkValue(13, sink);
 
     await new Promise<void>(resolve => setTimeout(resolve, 1));
-    expect(sunk).toBeUndefined();
+    expect(sank).toBeUndefined();
 
     resolve();
     await expect(promise).resolves.toBeUndefined();
-    expect(sunk).toBe(13);
+    expect(sank).toBe(13);
   });
-  it('resolves when data sunk', async () => {
+  it('resolves when data sank', async () => {
     const { resolve, whenDone } = new PromiseResolver<void>();
-    let sunk: number | undefined;
+    let sank: number | undefined;
 
     const sink: DataSink<number> = async value => {
-      sunk = value;
+      sank = value;
       await whenDone();
     };
 
@@ -38,7 +38,7 @@ describe('sinkValue', () => {
     });
 
     await new Promise<void>(resolve => setTimeout(resolve, 1));
-    expect(sunk).toBe(13);
+    expect(sank).toBe(13);
     expect(returned).toBe(false);
 
     resolve();
@@ -47,10 +47,10 @@ describe('sinkValue', () => {
   });
   it('resolves when processing supply cut off', async () => {
     const supply = new Supply();
-    let sunk: number | undefined;
+    let sank: number | undefined;
 
     const sink: DataSink<number> = value => {
-      sunk = value;
+      sank = value;
 
       return supply;
     };
@@ -61,65 +61,65 @@ describe('sinkValue', () => {
     });
 
     await new Promise<void>(resolve => setTimeout(resolve, 1));
-    expect(sunk).toBe(13);
+    expect(sank).toBe(13);
     expect(returned).toBe(false);
 
     supply.off();
     await expect(promise).resolves.toBeUndefined();
     expect(returned).toBe(true);
   });
-  it('resolves when inflow supply completed', async () => {
-    const inflowSupply = new Supply();
+  it('resolves when sink supply completed', async () => {
+    const sinkSupply = new Supply();
     const { resolve, whenDone } = new PromiseResolver<void>();
-    let sunk: number | undefined;
+    let sank: number | undefined;
 
     const sink: DataSink<number> = async (value, supply) => {
       await whenDone();
       if (supply.isOff) {
-        sunk = -value;
+        sank = -value;
       } else {
-        sunk = value;
+        sank = value;
       }
     };
 
-    const promise = sinkValue(13, sink, inflowSupply);
+    const promise = sinkValue(13, sink, sinkSupply);
 
     await new Promise<void>(resolve => setTimeout(resolve, 1));
-    expect(sunk).toBeUndefined();
+    expect(sank).toBeUndefined();
 
-    inflowSupply.off();
+    sinkSupply.off();
     await expect(promise).resolves.toBeUndefined();
-    expect(sunk).toBeUndefined();
+    expect(sank).toBeUndefined();
 
     resolve();
     await new Promise<void>(resolve => setTimeout(resolve, 1));
-    expect(sunk).toBe(-13);
+    expect(sank).toBe(-13);
   });
-  it('rejects when inflow supply failed', async () => {
-    const inflowSupply = new Supply();
+  it('rejects when sink supply failed', async () => {
+    const sinkSupply = new Supply();
     const { resolve, whenDone } = new PromiseResolver<void>();
-    let sunk: number | undefined;
+    let sank: number | undefined;
 
     const sink: DataSink<number> = async (value, supply) => {
       await whenDone();
       if (supply.isOff) {
-        sunk = -value;
+        sank = -value;
       } else {
-        sunk = value;
+        sank = value;
       }
     };
 
-    const promise = sinkValue(13, sink, inflowSupply);
+    const promise = sinkValue(13, sink, sinkSupply);
 
     await new Promise<void>(resolve => setTimeout(resolve, 1));
-    expect(sunk).toBeUndefined();
+    expect(sank).toBeUndefined();
 
-    inflowSupply.off('failed');
+    sinkSupply.off('failed');
     await expect(promise).rejects.toBe('failed');
-    expect(sunk).toBeUndefined();
+    expect(sank).toBeUndefined();
 
     resolve();
     await new Promise<void>(resolve => setTimeout(resolve, 1));
-    expect(sunk).toBe(-13);
+    expect(sank).toBe(-13);
   });
 });

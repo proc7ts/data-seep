@@ -3,12 +3,12 @@ import { withValue } from './with-value.js';
 
 describe('withValue', () => {
   it('seeps value', async () => {
-    let sunk: number | undefined;
+    let sank: number | undefined;
 
     await withValue(13)(value => {
-      sunk = value ** 2;
+      sank = value ** 2;
     });
 
-    expect(sunk).toBe(169);
+    expect(sank).toBe(169);
   });
 });

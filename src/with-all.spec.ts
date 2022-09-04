@@ -7,38 +7,38 @@ import { withValue } from './with-value.js';
 
 describe('withAll', () => {
   it('seeps empty object without intakes', async () => {
-    let sunk: unknown;
+    let sank: unknown;
 
     await withAll({})((value: unknown) => {
-      sunk = value;
+      sank = value;
     });
 
-    expect(sunk).toEqual({});
+    expect(sank).toEqual({});
   });
   it('seeps empty object with only undefined intakes', async () => {
-    let sunk: unknown;
+    let sank: unknown;
 
     await withAll({
       some: undefined!,
     })((value: unknown) => {
-      sunk = value;
+      sank = value;
     });
 
-    expect(sunk).toEqual({});
+    expect(sank).toEqual({});
   });
   it('seeps object with property', async () => {
-    let sunk: { some: number } | undefined;
+    let sank: { some: number } | undefined;
 
     await withAll({
       some: withValue(13),
     })(value => {
-      sunk = value;
+      sank = value;
     });
 
-    expect(sunk).toEqual({ some: 13 });
+    expect(sank).toEqual({ some: 13 });
   });
   it('seeps object with property multiple times', async () => {
-    const sunk: { some: number }[] = [];
+    const sank: { some: number }[] = [];
 
     await withAll({
       some: async (sink: DataSink<number>) => {
@@ -47,61 +47,61 @@ describe('withAll', () => {
         await sinkValue(3, sink);
       },
     })(value => {
-      sunk.push({ ...value });
+      sank.push({ ...value });
     });
 
-    expect(sunk).toEqual([{ some: 1 }, { some: 2 }, { some: 3 }]);
+    expect(sank).toEqual([{ some: 1 }, { some: 2 }, { some: 3 }]);
   });
   it('seeps object with multiple property', async () => {
-    let sunk: { some: number; other: number } | undefined;
+    let sank: { some: number; other: number } | undefined;
 
     await withAll({
       some: withValue(13),
       other: withValue(31),
     })(value => {
-      sunk = value;
+      sank = value;
     });
 
-    expect(sunk).toEqual({ some: 13, other: 31 });
+    expect(sank).toEqual({ some: 13, other: 31 });
   });
   it('seeps object only when first property is ready', async () => {
     const first = new PromiseResolver<number>();
-    let sunk: { some: number; other: number } | undefined;
+    let sank: { some: number; other: number } | undefined;
 
     const promise = withAll({
       some: withValue(first.whenDone()),
       other: withValue(2),
     })(value => {
-      sunk = value;
+      sank = value;
     });
 
     await new Promise<void>(resolve => setTimeout(resolve, 1));
-    expect(sunk).toBeUndefined();
+    expect(sank).toBeUndefined();
 
     first.resolve(1);
     await promise;
-    expect(sunk).toEqual({ some: 1, other: 2 });
+    expect(sank).toEqual({ some: 1, other: 2 });
   });
   it('seeps object only when second property is ready', async () => {
     const second = new PromiseResolver<number>();
-    let sunk: { some: number; other: number } | undefined;
+    let sank: { some: number; other: number } | undefined;
 
     const promise = withAll({
       some: withValue(1),
       other: withValue(second.whenDone()),
     })(value => {
-      sunk = value;
+      sank = value;
     });
 
     await new Promise<void>(resolve => setTimeout(resolve, 1));
-    expect(sunk).toBeUndefined();
+    expect(sank).toBeUndefined();
 
     second.resolve(2);
     await promise;
-    expect(sunk).toEqual({ some: 1, other: 2 });
+    expect(sank).toEqual({ some: 1, other: 2 });
   });
   it('does nothing on supply cut off', async () => {
-    let sunk: { some: number } | undefined;
+    let sank: { some: number } | undefined;
 
     await expect(
       withAll({
@@ -111,14 +111,14 @@ describe('withAll', () => {
           return Promise.resolve();
         },
       })(value => {
-        sunk = value;
+        sank = value;
       }),
     ).resolves.toBeUndefined();
 
-    expect(sunk).toBeUndefined();
+    expect(sank).toBeUndefined();
   });
   it('fails on supply failure', async () => {
-    let sunk: { some: number } | undefined;
+    let sank: { some: number } | undefined;
 
     await expect(
       withAll({
@@ -128,23 +128,23 @@ describe('withAll', () => {
           return Promise.resolve();
         },
       })(value => {
-        sunk = value;
+        sank = value;
       }),
     ).rejects.toBe('error');
 
-    expect(sunk).toBeUndefined();
+    expect(sank).toBeUndefined();
   });
   it('fails on seep failure', async () => {
-    let sunk: { some: number } | undefined;
+    let sank: { some: number } | undefined;
 
     await expect(
       withAll({
         some: async (_sink: DataSink<number>) => Promise.reject('error'),
       })(value => {
-        sunk = value;
+        sank = value;
       }),
     ).rejects.toBe('error');
 
-    expect(sunk).toBeUndefined();
+    expect(sank).toBeUndefined();
   });
 });

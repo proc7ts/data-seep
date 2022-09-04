@@ -4,13 +4,26 @@ import { DataFaucet, FaucetSeepType, IntakeFaucet } from './data-faucet.js';
 import { DataSink } from './data-sink.js';
 import { sinkValue } from './sink-value.js';
 
+/**
+ * Creates data faucet that pours record(s) with property values originated from intake faucets.
+ *
+ * A record is poured for the first time when each intake pours at least one value. Then it pours an updated record
+ * each time one of intakes pours an update.
+ *
+ * The pouring of records completes once any of intakes completes its data pouring.
+ *
+ * @typeParam TIntakes - Type of intakes record.
+ * @param intakes - Intakes record.
+ *
+ * @returns Records faucet consisting values poured by each intake under corresponding key.
+ */
 export function withAll<TIntakes extends WithAll.Intakes>(
   intakes: TIntakes,
 ): DataFaucet<WithAll.SeepType<TIntakes>> {
   type TSeep = WithAll.SeepType<TIntakes>;
 
-  return async (sink, supply = new Supply()) => {
-    const whenDone = supply.whenDone();
+  return async (sink, sinkSpply = new Supply()) => {
+    const whenDone = sinkSpply.whenDone();
     let prevValues: Partial<TSeep> = {};
     let values: Partial<TSeep> | null = null;
     const keys = Reflect.ownKeys(intakes);
@@ -18,7 +31,7 @@ export function withAll<TIntakes extends WithAll.Intakes>(
     let missing = keys.length;
     let ready: () => void = noop;
     let whenReady: Promise<void> | null = null;
-    const emit = async (): Promise<void> => {
+    const pourAll = async (): Promise<void> => {
       if (!missing) {
         ready();
       } else {
@@ -46,7 +59,7 @@ export function withAll<TIntakes extends WithAll.Intakes>(
       }
 
       try {
-        await sinkValue(newValues, sink, new Supply().needs(supply));
+        await sinkValue(newValues, sink, sinkSpply.derive());
       } finally {
         if (!values && prevValues === newValues) {
           // Values not altered while sinking.
@@ -79,7 +92,7 @@ export function withAll<TIntakes extends WithAll.Intakes>(
 
         let firstValue = !valueCount++;
 
-        valueSupply.needs(supply).whenOff(() => {
+        valueSupply.needs(sinkSpply).whenOff(() => {
           if (!--valueCount) {
             firstValue = false;
             ++missing;
@@ -90,19 +103,19 @@ export function withAll<TIntakes extends WithAll.Intakes>(
           --missing;
         }
 
-        await emit();
+        await pourAll();
       };
 
-      intake(sink, supply).then(
-        () => supply.done(),
-        error => supply.fail(error),
+      intake(sink, sinkSpply).then(
+        () => sinkSpply.done(),
+        error => sinkSpply.fail(error),
       );
     });
 
     if (!missing) {
-      // No inputs. Emit once then finish.
-      await emit();
-      supply.off();
+      // No intakes. Pour once then finish.
+      await pourAll();
+      sinkSpply.off();
     }
 
     return await whenDone;
@@ -110,10 +123,19 @@ export function withAll<TIntakes extends WithAll.Intakes>(
 }
 
 export namespace WithAll {
+  /**
+   * Intakes record for data faucet created by {@link withAll} function.
+   *
+   * Contains {@link IntakeFaucet intake data faucets} under arbitrary keys. The poured record would be combined of
+   * data values under the same keys corresponding to each intake.
+   */
   export type Intakes = {
     readonly [key in PropertyKey]: IntakeFaucet<unknown>;
   };
 
+  /**
+   * Type of record poured by data faucet created by {@link withAll} function.
+   */
   export type SeepType<TIntakes extends Intakes> = {
     [key in keyof TIntakes]: FaucetSeepType<TIntakes[key]>;
   };

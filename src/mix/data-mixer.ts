@@ -10,7 +10,7 @@ import { DataSeep } from './data-seep.js';
 import { DefaultDataMix } from './default-data-mix.js';
 
 /**
- * Data mixer allows to mix data originated from different {@link DataInfusions infusions},
+ * Data mixer allows to mix data originated from different {@link DataInfusion infusions},
  *
  * The resulting {@link DataMix data mix} may be used to pour the infused data.
  *

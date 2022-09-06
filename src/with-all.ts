@@ -15,7 +15,7 @@ import { sinkValue } from './sink-value.js';
  * @typeParam TIntakes - Type of intakes record.
  * @param intakes - Intakes record.
  *
- * @returns Records faucet consisting values poured by each intake under corresponding key.
+ * @returns Faucet of records containing values poured by each intake under corresponding key.
  */
 export function withAll<TIntakes extends WithAll.Intakes>(
   intakes: TIntakes,
@@ -135,6 +135,8 @@ export namespace WithAll {
 
   /**
    * Type of record poured by data faucet created by {@link withAll} function.
+   *
+   * @typeParam TIntakes - Type of intakes record.
    */
   export type SeepType<TIntakes extends Intakes> = {
     [key in keyof TIntakes]: FaucetSeepType<TIntakes[key]>;

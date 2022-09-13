@@ -1,6 +1,6 @@
 import { noop } from '@proc7ts/primitives';
 import { Supply } from '@proc7ts/supply';
-import { DataFaucet, FaucetSeepType, IntakeFaucet } from './data-faucet.js';
+import { DataFaucet, IntakeFaucet } from './data-faucet.js';
 import { DataSink } from './data-sink.js';
 import { sinkValue } from './sink-value.js';
 
@@ -139,6 +139,6 @@ export namespace WithAll {
    * @typeParam TIntakes - Type of intakes record.
    */
   export type SeepType<TIntakes extends Intakes> = {
-    [key in keyof TIntakes]: FaucetSeepType<TIntakes[key]>;
+    [key in keyof TIntakes]: DataFaucet.SeepType<TIntakes[key]>;
   };
 }

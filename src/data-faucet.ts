@@ -27,13 +27,15 @@ export type DataFaucet<out T> = (sink: DataSink<T>, sinkSupply?: Supply) => Prom
  */
 export type IntakeFaucet<out T> = (sink: DataSink<T>, sinkSupply: Supply) => Promise<void>;
 
-/**
- * Type of data pured by faucets of given type.
- *
- * @typeParam TFaucet - Data faucet type.
- */
-export type FaucetSeepType<TFaucet extends IntakeFaucet<unknown>> = TFaucet extends (
-  sink: DataSink<infer T>,
-) => Promise<void>
-  ? T
-  : never;
+export namespace DataFaucet {
+  /**
+   * Type of data poured by faucets of the given type.
+   *
+   * @typeParam TFaucet - Data faucet type.
+   */
+  export type SeepType<TFaucet extends IntakeFaucet<unknown>> = TFaucet extends (
+    sink: DataSink<infer T>,
+  ) => Promise<void>
+    ? T
+    : never;
+}

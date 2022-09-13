@@ -1,5 +1,5 @@
 import { DataFaucet } from '../data-faucet.js';
-import { DataInfusion, InfusionSeepType } from '../data-infusion.js';
+import { DataInfusion } from '../data-infusion.js';
 import { WithAll, withAll } from '../with-all.js';
 
 /**
@@ -55,6 +55,6 @@ export namespace DataMix {
    * @typeParam TIntakes - Type of infuses record.
    */
   export type SeepType<TInfusions extends Infusions> = {
-    [key in keyof TInfusions]: InfusionSeepType<TInfusions[key]>;
+    [key in keyof TInfusions]: DataInfusion.SeepType<TInfusions[key]>;
   };
 }

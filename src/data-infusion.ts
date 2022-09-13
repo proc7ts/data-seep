@@ -19,13 +19,15 @@ export type DataInfusion<out T, in TOptions extends unknown[]> = (
   ...options: TOptions
 ) => DataFaucet<T>;
 
-/**
- * Type of data pured by faucets created by infusions of the given type.
- *
- * @typeParam TInfusion - Data infusion type.
- */
-export type InfusionSeepType<TInfusion extends DataInfusion<unknown, any[]>> = TInfusion extends (
-  ...options: any[]
-) => DataFaucet<infer T>
-  ? T
-  : never;
+export namespace DataInfusion {
+  /**
+   * Type of data poured by faucets created by infusions of the given type.
+   *
+   * @typeParam TInfusion - Data infusion type.
+   */
+  export type SeepType<TInfusion extends DataInfusion<unknown, any[]>> = TInfusion extends (
+    ...options: any[]
+  ) => DataFaucet<infer T>
+    ? T
+    : never;
+}

@@ -2,7 +2,7 @@ import { Supply } from '@proc7ts/supply';
 import { DataFaucet } from '../data-faucet.js';
 import { DataInfusion } from '../data-infusion.js';
 import { DataSink } from '../data-sink.js';
-import { sinkValue } from '../sink-value.js';
+import { withValue } from '../with-value.js';
 import { DataCompound, DataCompounder } from './data-compound.js';
 import { DataInfusionError } from './data-infusion.error.js';
 import { DataMix } from './data-mix.js';
@@ -70,15 +70,10 @@ export class DataMixer<TMix extends DataMix = DataMix> {
    * @returns Promise resolved when the mix poured and sank.
    */
   async mix(sink: DataSink<TMix>, sinkSupply: Supply = new Supply()): Promise<void> {
-    const compound = new DataMix$Compound(this.#seeps, sinkSupply);
+    const compound = new DataMix$Compound(this.#seeps);
+    const mixFaucet = this.#compounder(compound);
 
-    try {
-      const mixFaucet = this.#compounder(compound);
-
-      await mixFaucet(sink, sinkSupply);
-    } finally {
-      compound.supply.off();
-    }
+    await mixFaucet(sink, sinkSupply);
   }
 
 }
@@ -86,19 +81,10 @@ export class DataMixer<TMix extends DataMix = DataMix> {
 class DataMix$Compound<TMix extends DataMix> implements DataCompound<TMix> {
 
   readonly #seeps = new Map<DataInfusion<unknown, unknown[]>, DataSeep<unknown, unknown[], TMix>>();
-  readonly #supply: Supply;
   readonly #faucets = new Map<DataInfusion<unknown, unknown[]>, DataFaucet<unknown>>();
 
-  constructor(
-    seeps: Map<DataInfusion<unknown, unknown[]>, DataSeep<unknown, unknown[], TMix>>,
-    supply: Supply,
-  ) {
+  constructor(seeps: Map<DataInfusion<unknown, unknown[]>, DataSeep<unknown, unknown[], TMix>>) {
     this.#seeps = seeps;
-    this.#supply = supply;
-  }
-
-  get supply(): Supply {
-    return this.#supply;
   }
 
   faucetFor<T, TOptions extends []>(infusion: DataInfusion<T, TOptions>, mix: TMix): DataFaucet<T> {
@@ -117,7 +103,7 @@ class DataMix$Compound<TMix extends DataMix> implements DataCompound<TMix> {
         const seepFaucet = seep(infusion, mix);
 
         faucet = async (sink, sinkSpply = new Supply()) => {
-          await seepFaucet(sink, sinkSpply.needs(this.#supply));
+          await seepFaucet(sink, sinkSpply);
         };
       } else {
         faucet = () => Promise.reject(
@@ -136,5 +122,5 @@ class DataMix$Compound<TMix extends DataMix> implements DataCompound<TMix> {
 function DataMix$createDefault<TMix extends DataMix>(
   compound: DataCompound<TMix>,
 ): DataFaucet<TMix> {
-  return async (sink, supply) => await sinkValue(new DefaultDataMix(compound) as DataMix as TMix, sink, supply);
+  return withValue(new DefaultDataMix(compound) as DataMix as TMix);
 }

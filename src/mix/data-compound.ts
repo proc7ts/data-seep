@@ -1,4 +1,3 @@
-import { Supply } from '@proc7ts/supply';
 import { DataFaucet, IntakeFaucet } from '../data-faucet.js';
 import { DataInfusion } from '../data-infusion.js';
 import { DataMix } from './data-mix.js';
@@ -13,13 +12,6 @@ import { DataMix } from './data-mix.js';
  * @typeParam TMix - Supported data mix.
  */
 export interface DataCompound<TMix extends DataMix = DataMix> {
-  /**
-   * Data mix supply.
-   *
-   * When cut off the compond may no longer be used.
-   */
-  readonly supply: Supply;
-
   /**
    * Provides access to data infused into the `mix` by particular `infusion`.
    *

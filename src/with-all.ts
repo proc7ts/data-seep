@@ -2,7 +2,6 @@ import { noop } from '@proc7ts/primitives';
 import { Supply } from '@proc7ts/supply';
 import { DataFaucet, IntakeFaucet } from './data-faucet.js';
 import { DataSink } from './data-sink.js';
-import { sinkValue } from './sink-value.js';
 
 /**
  * Creates data faucet that pours record(s) with property values originated from intake faucets.
@@ -23,63 +22,84 @@ export function withAll<TIntakes extends WithAll.Intakes>(
   type TSeep = WithAll.SeepType<TIntakes>;
 
   return async (sink, sinkSpply = new Supply()) => {
-    const whenDone = sinkSpply.whenDone();
-    let prevValues: Partial<TSeep> = {};
-    let values: Partial<TSeep> | null = null;
     const keys = Reflect.ownKeys(intakes);
 
-    let missing = keys.length;
-    let ready: () => void = noop;
-    let whenReady: Promise<void> | null = null;
-    const pourAll = async (): Promise<void> => {
-      if (!missing) {
-        ready();
+    let totalIntakeCount = keys.length;
+    let missingIntakeCount = totalIntakeCount;
+    let intakesReady: () => void = noop;
+    let whenIntakesReady: Promise<void> | null = null;
+
+    const allValuesSupply = new Supply();
+    let activeSinkCount = 0;
+    let prevValues: Partial<TSeep> = {};
+    let values: Partial<TSeep> | null = null; // null while sinking!
+
+    const pourValues = async (): Promise<void> => {
+      if (!missingIntakeCount) {
+        intakesReady();
       } else {
-        if (!whenReady) {
-          whenReady = new Promise<void>(resolve => {
-            ready = resolve;
+        if (!whenIntakesReady) {
+          whenIntakesReady = new Promise<void>(resolve => {
+            intakesReady = resolve;
           }).then(() => {
-            ready = noop;
-            whenReady = null;
+            intakesReady = noop;
+            whenIntakesReady = null;
           });
         }
 
-        await whenReady;
+        await whenIntakesReady;
       }
 
       // Prevent values from overriding while sinking them.
-      let newValues: TSeep;
+      let sankValues: TSeep;
 
       if (values) {
-        newValues = values as TSeep;
+        sankValues = values as TSeep;
         prevValues = values;
         values = null;
       } else {
-        newValues = prevValues as TSeep;
+        sankValues = prevValues as TSeep;
       }
 
+      ++activeSinkCount; // More than one sink may be active at a time.
       try {
-        await sinkValue(newValues, sink, sinkSpply.derive());
+        await sink(sankValues);
       } finally {
-        if (!values && prevValues === newValues) {
+        if (!values && prevValues === sankValues) {
           // Values not altered while sinking.
           values = prevValues;
           prevValues = {};
         }
+        if (!--activeSinkCount) {
+          // Stop pouring when all sinks completed.
+          allValuesSupply.done();
+        }
       }
     };
+
+    const intakeSinkSupply = new Supply(reason => {
+      if (missingIntakeCount) {
+        // Complete processing only if some intakes still missing.
+        allValuesSupply.cutOff(reason);
+      }
+    })
+      .needs(sinkSpply)
+      .needs(allValuesSupply);
 
     keys.forEach(<TKey extends keyof TIntakes>(key: TKey) => {
       const intake = intakes[key] as IntakeFaucet<TSeep[TKey]> | undefined;
 
       if (!intake) {
-        --missing;
+        // Handle missing intake.
+        --missingIntakeCount;
+        --totalIntakeCount;
 
         return;
       }
 
-      let valueCount = 0;
-      const sink: DataSink<TSeep[TKey]> = async (value, valueSupply): Promise<void> => {
+      let prevIntakeValueSupply: Supply | null = null;
+
+      const sinkIntake: DataSink<TSeep[TKey]> = async (value): Promise<void> => {
         if (values) {
           values[key] = value;
         } else {
@@ -90,35 +110,33 @@ export function withAll<TIntakes extends WithAll.Intakes>(
           };
         }
 
-        let firstValue = !valueCount++;
-
-        valueSupply.needs(sinkSpply).whenOff(() => {
-          if (!--valueCount) {
-            firstValue = false;
-            ++missing;
-          }
-        });
-
-        if (firstValue) {
-          --missing;
+        if (prevIntakeValueSupply) {
+          // Previous intake value is no longer in use.
+          prevIntakeValueSupply.done();
+        } else {
+          // First value from this intake.
+          --missingIntakeCount;
         }
 
-        await pourAll();
+        // While intake value is in use, its sink should not return, as this makes the value invalid.
+        const intakeValueSupply = new Supply().needs(allValuesSupply).needs(intakeSinkSupply);
+
+        prevIntakeValueSupply = intakeValueSupply;
+
+        await pourValues();
+        await intakeValueSupply.whenDone();
       };
 
-      intake(sink, sinkSpply).then(
-        () => sinkSpply.done(),
-        error => sinkSpply.fail(error),
-      );
+      intake(sinkIntake, intakeSinkSupply).catch(error => allValuesSupply.fail(error));
     });
 
-    if (!missing) {
+    if (!totalIntakeCount) {
       // No intakes. Pour once then finish.
-      await pourAll();
-      sinkSpply.off();
+      await pourValues();
+      allValuesSupply.done();
     }
 
-    return await whenDone;
+    return await allValuesSupply.whenDone();
   };
 }
 

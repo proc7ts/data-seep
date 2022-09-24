@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 import { PromiseResolver } from '@proc7ts/async';
+import { neverSupply, Supply, SupplyOut } from '@proc7ts/supply';
 import { DataSink } from './data-sink.js';
-import { sinkValue } from './sink-value.js';
 import { withAll } from './with-all.js';
 import { withValue } from './with-value.js';
 
@@ -38,16 +38,19 @@ describe('withAll', () => {
     expect(sank).toEqual({ some: 13 });
   });
   it('seeps object with property multiple times', async () => {
+    const valuesSank = new PromiseResolver();
     const sank: { some: number }[] = [];
 
     await withAll({
       some: async (sink: DataSink<number>) => {
-        await sinkValue(1, sink);
-        await sinkValue(2, sink);
-        await sinkValue(3, sink);
+        await Promise.all([sink(1), sink(2), sink(3)]);
       },
-    })(value => {
+    })(async value => {
       sank.push({ ...value });
+      if (sank.length === 3) {
+        valuesSank.resolve();
+      }
+      await valuesSank.whenDone();
     });
 
     expect(sank).toEqual([{ some: 1 }, { some: 2 }, { some: 3 }]);
@@ -100,40 +103,6 @@ describe('withAll', () => {
     await promise;
     expect(sank).toEqual({ some: 1, other: 2 });
   });
-  it('does nothing on supply cut off', async () => {
-    let sank: { some: number } | undefined;
-
-    await expect(
-      withAll({
-        some: async (_sink: DataSink<number>, supply) => {
-          supply.off();
-
-          return Promise.resolve();
-        },
-      })(value => {
-        sank = value;
-      }),
-    ).resolves.toBeUndefined();
-
-    expect(sank).toBeUndefined();
-  });
-  it('fails on supply failure', async () => {
-    let sank: { some: number } | undefined;
-
-    await expect(
-      withAll({
-        some: async (_sink: DataSink<number>, supply) => {
-          supply.off('error');
-
-          return Promise.resolve();
-        },
-      })(value => {
-        sank = value;
-      }),
-    ).rejects.toBe('error');
-
-    expect(sank).toBeUndefined();
-  });
   it('fails on seep failure', async () => {
     let sank: { some: number } | undefined;
 
@@ -146,5 +115,51 @@ describe('withAll', () => {
     ).rejects.toBe('error');
 
     expect(sank).toBeUndefined();
+  });
+  it('does not sink value when sink supply cut off', async () => {
+    let sank: { some: number } | undefined;
+
+    await withAll({ some: withValue(13) })(value => {
+      sank = { ...value };
+    }, neverSupply());
+
+    expect(sank).toBeUndefined();
+  });
+  it('stops sinking when sink supply cut off', async () => {
+    const sinkSupply = new Supply();
+    const twoValuesSank = new PromiseResolver();
+    const valuesSank = new PromiseResolver();
+    const sank: { some: number }[] = [];
+
+    await withAll({
+      some: async (sink: DataSink<number>, supply: SupplyOut): Promise<void> => {
+        let sinkValue = sink;
+
+        supply.whenOff(() => {
+          sinkValue = async () => await supply.whenDone();
+        });
+
+        const doSink = async (value: number): Promise<void> => {
+          await sinkValue(value);
+        };
+
+        await Promise.all([doSink(1), doSink(2), twoValuesSank.whenDone().then(() => doSink(3))]);
+      },
+    })(async value => {
+      sank.push({ ...value });
+      if (sank.length === 2) {
+        twoValuesSank.resolve();
+        sinkSupply.done();
+      }
+      if (sank.length === 3) {
+        valuesSank.resolve();
+      }
+      await Promise.race([
+        valuesSank.whenDone(),
+        sinkSupply.whenDone().then(() => new Promise(resolve => setTimeout(resolve, 10))),
+      ]);
+    }, sinkSupply);
+
+    expect(sank).toEqual([{ some: 1 }, { some: 2 }]);
   });
 });

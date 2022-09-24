@@ -1,4 +1,5 @@
 import { describe, expect, it } from '@jest/globals';
+import { neverSupply } from '@proc7ts/supply';
 import { withValue } from './with-value.js';
 
 describe('withValue', () => {
@@ -10,5 +11,14 @@ describe('withValue', () => {
     });
 
     expect(sank).toBe(169);
+  });
+  it('does not sink value when sink supply cut off', async () => {
+    let sank: number | undefined;
+
+    await withValue(13)(value => {
+      sank = value;
+    }, neverSupply());
+
+    expect(sank).toBeUndefined();
   });
 });

@@ -1,4 +1,4 @@
-import { Supply } from '@proc7ts/supply';
+import { SupplyOut } from '@proc7ts/supply';
 import { DataSink } from './data-sink.js';
 
 /**
@@ -14,7 +14,7 @@ import { DataSink } from './data-sink.js';
  *
  * @returns Promise resolved when all data poured and sank.
  */
-export type DataFaucet<out T> = (sink: DataSink<T>, sinkSupply?: Supply) => Promise<void>;
+export type DataFaucet<out T> = (sink: DataSink<T>, sinkSupply?: SupplyOut) => Promise<void>;
 
 /**
  * An intake {@link DataFaucet data facet} that always receives a sink supply.
@@ -25,7 +25,7 @@ export type DataFaucet<out T> = (sink: DataSink<T>, sinkSupply?: Supply) => Prom
  *
  * @returns Promise resolved when all data poured and sank.
  */
-export type IntakeFaucet<out T> = (sink: DataSink<T>, sinkSupply: Supply) => Promise<void>;
+export type IntakeFaucet<out T> = (sink: DataSink<T>, sinkSupply: SupplyOut) => Promise<void>;
 
 export namespace DataFaucet {
   /**

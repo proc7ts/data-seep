@@ -3,7 +3,7 @@ import { DataFaucet } from '../data-faucet.js';
 import { DataInfusion } from '../data-infusion.js';
 import { DataSink } from '../data-sink.js';
 import { withValue } from '../with-value.js';
-import { DataCompound, DataCompounder } from './data-compound.js';
+import { DataMixCompound, DataMixCompounder } from './data-mix-compound.js';
 import { DataInfusionError } from './data-infusion.error.js';
 import { DataMix } from './data-mix.js';
 import { DataSeep } from './data-seep.js';
@@ -18,22 +18,22 @@ import { DefaultDataMix } from './default-data-mix.js';
  */
 export class DataMixer<TMix extends DataMix = DataMix> {
 
-  readonly #compounder: DataCompounder<TMix>;
+  readonly #compounder: DataMixCompounder<TMix>;
   readonly #seeps = new Map<DataInfusion<unknown, unknown[]>, DataSeep<unknown, unknown[], TMix>>();
 
   /**
    * Constructs data mixer.
    *
-   * @param init - Initialization tuple containing mized data compounder. The one puring {@link DefaultDataMix} will be
+   * @param init - Initialization tuple containing mixed data compounder. The one puring {@link DefaultDataMix} will be
    * used when omitted.
    */
   constructor(
     ...init: DataMix extends TMix
-      ? [compounder?: DataCompounder<TMix>]
-      : [compounder: DataCompounder<TMix>]
+      ? [compounder?: DataMixCompounder<TMix>]
+      : [compounder: DataMixCompounder<TMix>]
   );
 
-  constructor(compounder: DataCompounder<TMix> = DataMix$createDefault) {
+  constructor(compounder: DataMixCompounder<TMix> = DataMix$createDefault) {
     this.#compounder = compounder;
   }
 
@@ -78,7 +78,7 @@ export class DataMixer<TMix extends DataMix = DataMix> {
 
 }
 
-class DataMix$Compound<TMix extends DataMix> implements DataCompound<TMix> {
+class DataMix$Compound<TMix extends DataMix> implements DataMixCompound<TMix> {
 
   readonly #seeps = new Map<DataInfusion<unknown, unknown[]>, DataSeep<unknown, unknown[], TMix>>();
   readonly #faucets = new Map<DataInfusion<unknown, unknown[]>, DataFaucet<unknown>>();
@@ -120,7 +120,7 @@ class DataMix$Compound<TMix extends DataMix> implements DataCompound<TMix> {
 }
 
 function DataMix$createDefault<TMix extends DataMix>(
-  compound: DataCompound<TMix>,
+  compound: DataMixCompound<TMix>,
 ): DataFaucet<TMix> {
   return withValue(new DefaultDataMix(compound) as DataMix as TMix);
 }

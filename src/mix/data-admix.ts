@@ -7,7 +7,7 @@ import { DataMix } from './data-mix.js';
  * Data admixture (ingredient) of {@link DataMix data mix}.
  *
  * When {@link DataMixer#add added} to data mixture, the resulting data mix provides access to the data poured by
- * corresponding {@link DataAdmix#infusion data infusion}.
+ * corresponding {@link DataAdmix#infuse data infusion}.
  *
  * Names of functions creating data admixes supposed to have an `admix` prefix. E.g. {@link admix}
  * or {@link admixValue},
@@ -22,9 +22,9 @@ export interface DataAdmix<
   in TMix extends DataMix = DataMix,
 > {
   /**
-   * The infusion of data this admix pours.
+   * The infusion of the data poured by this admix.
    */
-  readonly infusion: DataInfusion<T, TOptions>;
+  readonly infuse: DataInfusion<T, TOptions>;
 
   /**
    * Optional admix supply.
@@ -50,19 +50,17 @@ export interface DataAdmix<
  *
  * @typeParam T - Infused data type.
  * @typeParam TOptions - Tuple type representing infusion options.
- * @param infusion - Source data infusion.
+ * @param infuse - Source data infusion.
  * @param options - Custom infusion options.
  *
  * @returns New data admix.
  */
 export function admix<T, TOptions extends unknown[]>(
-  infusion: DataInfusion<T, TOptions>,
+  infuse: DataInfusion<T, TOptions>,
   ...options: TOptions
 ): DataAdmix<T, TOptions> {
   return {
-    infusion,
-    pour(_mix) {
-      return infusion(...options);
-    },
+    infuse,
+    pour: () => infuse(...options),
   };
 }

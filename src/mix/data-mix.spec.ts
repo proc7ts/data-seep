@@ -16,7 +16,7 @@ describe('DataMix', () => {
 
   describe('pour', () => {
     it('provides access to infused data', async () => {
-      mixer.add({ infusion: withTestData, pour: () => withTestData(1) });
+      mixer.add({ infuse: withTestData, pour: () => withTestData(1) });
 
       let sank: number | undefined;
 
@@ -29,7 +29,7 @@ describe('DataMix', () => {
       expect(sank).toBe(1);
     });
     it('respects sink supply', async () => {
-      mixer.add({ infusion: withTestData, pour: () => withTestData(1) });
+      mixer.add({ infuse: withTestData, pour: () => withTestData(1) });
 
       let sank: number | undefined;
 
@@ -56,8 +56,8 @@ describe('DataMix', () => {
 
   describe('pourAll', () => {
     it('provides access to infused data', async () => {
-      mixer.add({ infusion: withTestData, pour: () => withTestData(1) });
-      mixer.add({ infusion: withTestData2, pour: () => withTestData2('test') });
+      mixer.add({ infuse: withTestData, pour: () => withTestData(1) });
+      mixer.add({ infuse: withTestData2, pour: () => withTestData2('test') });
 
       let sank: { first: number; second: string } | undefined;
 

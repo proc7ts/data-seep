@@ -52,7 +52,7 @@ export class DataMixer<TMix extends DataMix = DataMix> {
    * @returns Admix supply. Once cut off, the `admix` will be removed from the mix and thus won't pour any data.
    */
   add<T, TOptions extends unknown[]>(admix: DataAdmix<T, TOptions, TMix>): Supply {
-    const infusion = admix.infusion as DataInfusion<unknown, unknown[]>;
+    const infusion = admix.infuse as DataInfusion<unknown, unknown[]>;
     const prevAdmix = this.#admixes.get(infusion);
 
     prevAdmix?.supply.done();

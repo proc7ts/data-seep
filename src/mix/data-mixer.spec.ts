@@ -40,7 +40,7 @@ describe('DataMixer', () => {
       mixer.add(admix(withTestData, 1));
 
       mixer.add({
-        infusion: withTestData,
+        infuse: withTestData,
         supply: neverSupply(),
         pour: () => withTestData(13),
       });

@@ -33,11 +33,7 @@ export class DataJoint<out T, in TIn extends T = T> {
     }
 
     await this.accept(value);
-    await Promise.all(
-      [...this.#sinks.values()].map(async sink => {
-        await sink(value);
-      }),
-    );
+    await Promise.all([...this.#sinks.values()].map(async sink => await sink(value)));
   }
 
   async #addSink(sink: DataSink<T>, sinkSupply?: SupplyOut): Promise<void> {

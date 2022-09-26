@@ -6,8 +6,6 @@ import { DataJoint } from './data-joint.js';
  * In addition to connecting {@link DataSink data sink} with {@link DataFaucet data faucet}, the value joint also
  * preserves the latest value, and pours it to newly {@link ValueJoint#addSink added} data sinks.
  *
- * The data sank to the {@link ValueJoint#sink sink} is poured to the {@link ValueJoint#faucet faucet}.
- *
  * @typeParam T - Type of data values poured by {@link DataJoint#faucet joint faucet}.
  * @typeParam TIn - Type of data values accepted by {@link DataJoint#sink joint sink}.
  */
@@ -56,7 +54,7 @@ export class ValueJoint<out T, in TIn extends T = T> extends DataJoint<T, TIn> {
    *
    * Pours {@link value current value} to the added `sink`.
    *
-   * @param _sink - Added data sink.
+   * @param sink - Added data sink.
    * @param _sinkSupply - Added data sink supply. When cut off the data won't be poured to target `sink`.
    *
    * @returns Either nothing, or a promise-like instance resolved when the sink added.

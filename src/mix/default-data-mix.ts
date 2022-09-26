@@ -23,7 +23,7 @@ export class DefaultDataMix extends DataMix {
   }
 
   override pour<T, TOptions extends []>(infusion: DataInfusion<T, TOptions>): DataFaucet<T> {
-    return this.#compound.faucetFor(infusion, this);
+    return this.#compound.pour(infusion, this);
   }
 
 }

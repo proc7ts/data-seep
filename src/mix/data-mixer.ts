@@ -105,7 +105,7 @@ class DataMix$Compound<TMix extends DataMix> implements DataMixCompound<TMix> {
     this.#admixes = seeps;
   }
 
-  faucetFor<T, TOptions extends []>(infusion: DataInfusion<T, TOptions>, mix: TMix): DataFaucet<T> {
+  pour<T, TOptions extends []>(infusion: DataInfusion<T, TOptions>, mix: TMix): DataFaucet<T> {
     let faucet = this.#faucets.get(infusion as DataInfusion<unknown, unknown[]>) as
       | DataFaucet<T>
       | undefined;

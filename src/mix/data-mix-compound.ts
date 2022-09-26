@@ -13,7 +13,7 @@ import { DataMix } from './data-mix.js';
  */
 export interface DataMixCompound<TMix extends DataMix = DataMix> {
   /**
-   * Provides access to data infused into the `mix` by particular `infusion`.
+   * Pours data infused into the `mix` by particular `infusion`.
    *
    * @typeParam T - Infused data type. I.e. the type of data poured by returned faucet.
    * @typeParam TOptions - Infusion options.
@@ -22,7 +22,7 @@ export interface DataMixCompound<TMix extends DataMix = DataMix> {
    *
    * @returns Infused data faucet.
    */
-  faucetFor<T, TOptions extends unknown[]>(
+  pour<T, TOptions extends unknown[]>(
     infusion: DataInfusion<T, TOptions>,
     mix: TMix,
   ): DataFaucet<T>;

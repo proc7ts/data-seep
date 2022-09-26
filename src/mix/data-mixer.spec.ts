@@ -4,7 +4,7 @@ import { neverSupply } from '@proc7ts/supply';
 import { DataFaucet } from '../data-faucet.js';
 import { DataInfusion } from '../data-infusion.js';
 import { withValue } from '../infusions/with-value.js';
-import { admix } from './data-admix.js';
+import { admix } from './admixes/mod.js';
 import { DataInfusionError } from './data-infusion.error.js';
 import { DataMixer } from './data-mixer.js';
 

@@ -1,8 +1,8 @@
 import { describe, expect, it } from '@jest/globals';
-import { DataFaucet } from '../data-faucet.js';
-import { withValue } from '../infusions/with-value.js';
+import { DataFaucet } from '../../data-faucet.js';
+import { withValue } from '../../infusions/with-value.js';
 import { admixValue } from './admix-value.js';
-import { DataMixer } from './data-mixer.js';
+import { DataMixer } from '../data-mixer.js';
 
 describe('admixValue', () => {
   it('pours the given value', async () => {

@@ -1,6 +1,6 @@
-import { DataInfusion } from '../data-infusion.js';
-import { withValue } from '../infusions/with-value.js';
-import { DataAdmix } from './data-admix.js';
+import { DataInfusion } from '../../data-infusion.js';
+import { withValue } from '../../infusions/with-value.js';
+import { DataAdmix } from '../data-admix.js';
 
 /**
  * Creates a data admix infusing single `value`.

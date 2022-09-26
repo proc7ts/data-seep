@@ -1,4 +1,4 @@
-export * from './admix-value.js';
+export * from './admixes/mod.js';
 export * from './data-admix.js';
 export * from './data-infusion.error.js';
 export * from './data-mix-compound.js';

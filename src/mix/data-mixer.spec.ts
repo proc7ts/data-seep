@@ -3,7 +3,7 @@ import { noop } from '@proc7ts/primitives';
 import { neverSupply } from '@proc7ts/supply';
 import { DataFaucet } from '../data-faucet.js';
 import { DataInfusion } from '../data-infusion.js';
-import { withValue } from '../with-value.js';
+import { withValue } from '../infusions/with-value.js';
 import { admix } from './data-admix.js';
 import { DataInfusionError } from './data-infusion.error.js';
 import { DataMixer } from './data-mixer.js';

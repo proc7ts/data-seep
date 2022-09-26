@@ -1,5 +1,5 @@
 import { DataInfusion } from '../data-infusion.js';
-import { withValue } from '../with-value.js';
+import { withValue } from '../infusions/with-value.js';
 import { DataAdmix } from './data-admix.js';
 
 /**

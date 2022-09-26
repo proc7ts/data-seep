@@ -2,7 +2,7 @@ import { Supply } from '@proc7ts/supply';
 import { DataFaucet, IntakeFaucet } from '../data-faucet.js';
 import { DataInfusion } from '../data-infusion.js';
 import { DataSink } from '../data-sink.js';
-import { withValue } from '../with-value.js';
+import { withValue } from '../infusions/with-value.js';
 import { DataAdmix } from './data-admix.js';
 import { DataInfusionError } from './data-infusion.error.js';
 import { DataMixCompound, DataMixCompounder } from './data-mix-compound.js';

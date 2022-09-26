@@ -36,7 +36,7 @@ export interface DataAdmix<
   readonly supply?: Supply | undefined;
 
   /**
-   * Creates infused data asset for the given data `mix`.
+   * Pours data infused to the given data `mix`.
    *
    * @param mix - Target data mix.
    *

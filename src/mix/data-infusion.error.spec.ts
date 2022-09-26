@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from '@jest/globals';
 import { DataFaucet } from '../data-faucet.js';
 import { DataInfusion } from '../data-infusion.js';
-import { withValue } from '../with-value.js';
+import { withValue } from '../infusions/with-value.js';
 import { DataInfusionError } from './data-infusion.error.js';
 
 describe('DataInfusionError', () => {

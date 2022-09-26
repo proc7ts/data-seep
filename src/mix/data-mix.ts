@@ -1,6 +1,6 @@
 import { DataFaucet } from '../data-faucet.js';
 import { DataInfusion } from '../data-infusion.js';
-import { WithAll, withAll } from '../with-all.js';
+import { withAll, WithAll } from '../infusions/with-all.js';
 
 /**
  * Data mix provides access to data {@link DataMixer#mix mixed into data mixer}.

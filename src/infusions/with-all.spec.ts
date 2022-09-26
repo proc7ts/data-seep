@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 import { PromiseResolver } from '@proc7ts/async';
 import { neverSupply, Supply, SupplyOut } from '@proc7ts/supply';
-import { DataSink } from './data-sink.js';
+import { DataSink } from '../data-sink.js';
 import { withAll } from './with-all.js';
 import { withValue } from './with-value.js';
 

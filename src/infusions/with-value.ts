@@ -1,4 +1,4 @@
-import { DataFaucet } from './data-faucet.js';
+import { DataFaucet } from '../data-faucet.js';
 
 /**
  * Creates data faucet that pours single `value` to target sink.

@@ -1,7 +1,7 @@
 import { noop } from '@proc7ts/primitives';
 import { Supply } from '@proc7ts/supply';
-import { DataFaucet, IntakeFaucet } from './data-faucet.js';
-import { DataSink } from './data-sink.js';
+import { DataFaucet, IntakeFaucet } from '../data-faucet.js';
+import { DataSink } from '../data-sink.js';
 
 /**
  * Creates data faucet that pours record(s) with property values originated from intake faucets.

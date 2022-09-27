@@ -5,7 +5,7 @@ import { DataJoint } from './data-joint.js';
 
 /**
  * In addition to connecting {@link DataSink data sink} with {@link DataFaucet data faucet}, the buffer joint also
- * buffers the latest values, and pours them to newly {@link BufferJoint#addSink added} data sinks.
+ * buffers the latest values, and pours them to newly {@link BufferJoint#sinkAdded added} data sinks.
  *
  * @typeParam T - Type of data values poured by {@link DataJoint#faucet joint faucet}.
  * @typeParam TIn - Type of data values accepted by {@link DataJoint#sink joint sink}.
@@ -55,7 +55,7 @@ export class BufferJoint<out T, in TIn extends T = T>
 
   /**
    * Called when new data value accepted by {@link sink joint sink} right before being actually sank to sinks
-   * {@link addSink added} to this joint.
+   * {@link sinkAdded added} to this joint.
    *
    * The value won't be sank if this method call failed.
    *
@@ -70,10 +70,8 @@ export class BufferJoint<out T, in TIn extends T = T>
   }
 
   /**
-   * Called when new data sink accepted by {@link faucet joint faucet} right before the sink is actually added to the
+   * Called when new data sink accepted by {@link faucet joint faucet}, right after the sink is actually added to the
    * joint.
-   *
-   * The sink won't be added to the joint if this method call failed.
    *
    * Pours all buffered values to the added `sink`.
    *
@@ -82,7 +80,7 @@ export class BufferJoint<out T, in TIn extends T = T>
    *
    * @returns Either nothing, or a promise-like instance resolved when the sink added.
    */
-  protected override async addSink(sink: DataSink<T>, _sinkSupply: Supply<void>): Promise<void> {
+  protected override async sinkAdded(sink: DataSink<T>, _sinkSupply: Supply<void>): Promise<void> {
     await Promise.all([...this.#buffer].map(async value => await sink(value)));
   }
 

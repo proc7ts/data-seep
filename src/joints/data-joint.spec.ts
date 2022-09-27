@@ -68,13 +68,13 @@ describe('DataJoint', () => {
   });
 
   describe('faucet', () => {
-    it('ignores rejected sinks', async () => {
+    it('add unaccepted sinks', async () => {
       const error = new Error('Rejected!');
       let added = false;
 
       class TestJoint extends DataJoint<number> {
 
-        protected override addSink(): void {
+        protected override sinkAdded(): void {
           if (added) {
             throw error;
           }
@@ -99,7 +99,7 @@ describe('DataJoint', () => {
       await joint.sink(2);
       await joint.sink(3);
 
-      expect(sank).toEqual([1, 2, 3]);
+      expect(sank).toEqual([1, -1, 2, -2, 3, -3]);
     });
     it('ignores removed sinks', async () => {
       const error = new Error('Rejected!');
@@ -107,7 +107,7 @@ describe('DataJoint', () => {
 
       class TestJoint extends DataJoint<number> {
 
-        protected override addSink(_sink: DataSink<number>, sinkSupply: Supply): void {
+        protected override sinkAdded(_sink: DataSink<number>, sinkSupply: Supply): void {
           if (added) {
             sinkSupply.fail(error);
           }
@@ -122,11 +122,9 @@ describe('DataJoint', () => {
       await joint.faucet(value => {
         sank.push(value);
       });
-      await expect(
-        joint.faucet(value => {
-          sank.push(-value);
-        }),
-      ).rejects.toThrow(error);
+      await joint.faucet(value => {
+        sank.push(-value);
+      });
 
       await joint.sink(1);
       await joint.sink(2);

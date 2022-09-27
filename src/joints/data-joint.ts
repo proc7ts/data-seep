@@ -51,13 +51,8 @@ export class DataJoint<out T, in TIn extends T = T> {
       return await supply.whenDone();
     }
 
-    await this.addSink(sink, supply);
-
-    if (supply.isOff) {
-      return await supply.whenDone();
-    }
-
     this.#sinks.set(supply, sink);
+    await this.sinkAdded(sink, supply);
   }
 
   /**
@@ -70,7 +65,7 @@ export class DataJoint<out T, in TIn extends T = T> {
   }
 
   /**
-   * Data sink accepting data values then poured by {@link faucet joint faucet} to all sinks {@link addSink added}
+   * Data sink accepting data values then poured by {@link faucet joint faucet} to all sinks {@link sinkAdded added}
    * to this joint.
    */
   get sink(): DataSink<TIn> {
@@ -86,7 +81,7 @@ export class DataJoint<out T, in TIn extends T = T> {
 
   /**
    * Called when new data value accepted by {@link sink joint sink} right before being actually sank to sinks
-   * {@link addSink added} to this joint.
+   * {@link sinkAdded added} to this joint.
    *
    * The value won't be sank if this method call failed.
    *
@@ -101,10 +96,8 @@ export class DataJoint<out T, in TIn extends T = T> {
   }
 
   /**
-   * Called when new data sink accepted by {@link faucet joint faucet} right before the sink is actually added to the
+   * Called when new data sink accepted by {@link faucet joint faucet}, right after the sink is actually added to the
    * joint.
-   *
-   * The sink won't be added to the joint if this method call failed.
    *
    * Does nothing by default.
    *
@@ -113,7 +106,7 @@ export class DataJoint<out T, in TIn extends T = T> {
    *
    * @returns Either nothing, or a promise-like instance resolved when the sink added.
    */
-  protected addSink(_sink: DataSink<T>, _sinkSupply: Supply): void | PromiseLike<unknown> {
+  protected sinkAdded(_sink: DataSink<T>, _sinkSupply: Supply): void | PromiseLike<unknown> {
     // Do nothing.
   }
 

@@ -4,7 +4,7 @@ import { DataJoint } from './data-joint.js';
 
 /**
  * In addition to connecting {@link DataSink data sink} with {@link DataFaucet data faucet}, the value joint also
- * preserves the latest value, and pours it to newly {@link ValueJoint#addSink added} data sinks.
+ * preserves the latest value, and pours it to newly {@link ValueJoint#sinkAdded added} data sinks.
  *
  * @typeParam T - Type of data values poured by {@link DataJoint#faucet joint faucet}.
  * @typeParam TIn - Type of data values accepted by {@link DataJoint#sink joint sink}.
@@ -32,7 +32,7 @@ export class ValueJoint<out T, in TIn extends T = T> extends DataJoint<T, TIn> {
 
   /**
    * Called when new data value accepted by {@link sink joint sink} right before being actually sank to sinks
-   * {@link addSink added} to this joint.
+   * {@link sinkAdded added} to this joint.
    *
    * The value won't be sank if this method call failed.
    *
@@ -47,10 +47,8 @@ export class ValueJoint<out T, in TIn extends T = T> extends DataJoint<T, TIn> {
   }
 
   /**
-   * Called when new data sink accepted by {@link faucet joint faucet} right before the sink is actually added to the
+   * Called when new data sink accepted by {@link faucet joint faucet}, right after the sink is actually added to the
    * joint.
-   *
-   * The sink won't be added to the joint if this method call failed.
    *
    * Pours {@link value current value} to the added `sink`.
    *
@@ -59,7 +57,7 @@ export class ValueJoint<out T, in TIn extends T = T> extends DataJoint<T, TIn> {
    *
    * @returns Either nothing, or a promise-like instance resolved when the sink added.
    */
-  protected async addSink(sink: DataSink<T>, _sinkSupply: Supply<void>): Promise<void> {
+  protected async sinkAdded(sink: DataSink<T>, _sinkSupply: Supply<void>): Promise<void> {
     await sink(this.value);
   }
 

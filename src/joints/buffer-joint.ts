@@ -7,6 +7,8 @@ import { DataJoint } from './data-joint.js';
  * In addition to connecting {@link DataSink data sink} with {@link DataFaucet data faucet}, the buffer joint also
  * buffers the latest values, and pours them to newly {@link BufferJoint#sinkAdded added} data sinks.
  *
+ * Note that the sinking won't complete until the value droped from buffer or joint supply cut off.
+ *
  * @typeParam T - Type of data values poured by {@link DataJoint#faucet joint faucet}.
  * @typeParam TIn - Type of data values accepted by {@link DataJoint#sink joint sink}.
  */
@@ -14,7 +16,7 @@ export class BufferJoint<out T, in TIn extends T = T>
   extends DataJoint<T, TIn>
   implements Iterable<T> {
 
-  readonly #buffer: BufferJoint.Buffer<T>;
+  #buffer: BufferJoint.Buffer<T>;
 
   /**
    * Constructs buffer joint.
@@ -23,13 +25,14 @@ export class BufferJoint<out T, in TIn extends T = T>
    */
   constructor(buffer?: BufferJoint.Buffer<T> | number) {
     super();
+
     if (buffer == null) {
-      this.#buffer = [];
+      this.#buffer = new BufferJoint$InfiniteBuffer();
     } else if (typeof buffer === 'number') {
       const capacity = Math.max(0, buffer);
 
       if (!Number.isFinite(capacity)) {
-        this.#buffer = [];
+        this.#buffer = new BufferJoint$InfiniteBuffer();
       } else if (capacity < 1) {
         this.#buffer = BufferJoint$EmptyBuffer;
       } else {
@@ -38,6 +41,11 @@ export class BufferJoint<out T, in TIn extends T = T>
     } else {
       this.#buffer = buffer;
     }
+
+    this.supply.whenOff(() => {
+      this.#buffer.clear();
+      this.#buffer = BufferJoint$EmptyBuffer;
+    });
   }
 
   [Symbol.iterator](): IterableIterator<T> {
@@ -54,19 +62,16 @@ export class BufferJoint<out T, in TIn extends T = T>
   }
 
   /**
-   * Called when new data value accepted by {@link sink joint sink} right before being actually sank to sinks
-   * {@link sinkAdded added} to this joint.
-   *
-   * The value won't be sank if this method call failed.
+   * Called when new data value accepted by {@link sink joint sink}.
    *
    * Buffers `value` by default.
    *
    * @param value - Accepted data value.
    *
-   * @returns Ether nothing, or a promise-like instance resolved when the value accepted.
+   * @returns Promise resolved when the value removed from the buffer, or {@link supply joint supply} cut off.
    */
-  protected override accept(value: TIn): void | PromiseLike<unknown> {
-    this.#buffer.push(value);
+  protected override valueAccepted(value: TIn): Promise<void> {
+    return new Promise(resolve => this.#buffer.add(value, resolve));
   }
 
   /**
@@ -93,30 +98,71 @@ export namespace BufferJoint {
    * @typeParam T - Type of buffered values.
    */
   export interface Buffer<T> extends Iterable<T> {
-    push(value: T): void;
+    /**
+     * Adds entry to the buffer.
+     *
+     * @param value - Entry to buffer.
+     * @param drop - Function to call when the value droppped from the buffer.
+     */
+    add(value: T, drop: () => void): void;
+
+    /**
+     * Clears the buffer.
+     */
+    clear(): void;
+
+    /**
+     * Iterates over buffered values.
+     */
     [Symbol.iterator](): IterableIterator<T>;
   }
 }
 
 const BufferJoint$EmptyBuffer: BufferJoint.Buffer<never> = {
-  push: noop,
-  [Symbol.iterator]: () => [][Symbol.iterator](),
+  add(_value, drop) {
+    drop();
+  },
+  clear: noop,
+  [Symbol.iterator]() {
+    return [][Symbol.iterator]();
+  },
 };
+
+class BufferJoint$InfiniteBuffer<T> implements BufferJoint.Buffer<T> {
+
+  #entries: BufferJoint$Entry<T>[] = [];
+
+  add(value: T, drop: () => void): void {
+    this.#entries.push({ value, drop });
+  }
+
+  clear(): void {
+    this.#entries.forEach(({ drop }) => drop());
+    this.#entries.length = 0;
+  }
+
+  *[Symbol.iterator](): IterableIterator<T> {
+    for (const { value } of this.#entries) {
+      yield value;
+    }
+  }
+
+}
 
 class BufferJoint$CyclicBuffer<T> implements BufferJoint.Buffer<T> {
 
   readonly #capacity: number;
-  readonly #values: T[] = [];
+  readonly #entries: BufferJoint$Entry<T>[] = [];
   #head = 0;
   #tail = 0;
   #size = 0;
 
   constructor(capacity: number) {
     this.#capacity = capacity;
-    this.#values = new Array(capacity);
+    this.#entries = new Array(capacity);
   }
 
-  push(value: T): void {
+  add(value: T, drop: () => void): void {
     const index = this.#tail;
 
     if (++this.#tail >= this.#capacity) {
@@ -129,18 +175,40 @@ class BufferJoint$CyclicBuffer<T> implements BufferJoint.Buffer<T> {
       }
     }
 
-    this.#values[index] = value;
+    const prevEntry = this.#entries[index];
+
+    this.#entries[index] = { value, drop };
+
+    prevEntry?.drop();
   }
 
-  *[Symbol.iterator](): IterableIterator<T> {
+  clear(): void {
+    for (const { drop } of this.#iterate()) {
+      drop();
+    }
+    this.#entries.length = 0;
+  }
+
+  *#iterate(): IterableIterator<BufferJoint$Entry<T>> {
     let index = this.#head;
 
     for (let size = this.#size; size > 0; --size) {
-      yield this.#values[index];
+      yield this.#entries[index];
       if (++index >= this.#capacity) {
         index = 0;
       }
     }
   }
 
+  *[Symbol.iterator](): IterableIterator<T> {
+    for (const { value } of this.#iterate()) {
+      yield value;
+    }
+  }
+
+}
+
+interface BufferJoint$Entry<T> {
+  readonly value: T;
+  readonly drop: (this: void) => void;
 }

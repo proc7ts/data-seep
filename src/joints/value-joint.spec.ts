@@ -10,12 +10,25 @@ describe('ValueJoint', () => {
     });
     it('contains last accepted value', async () => {
       const joint = new ValueJoint(0);
+      const promise = Promise.all([joint.sink(1), joint.sink(2), joint.sink(3)]);
 
-      await joint.sink(1);
-      await joint.sink(2);
-      await joint.sink(3);
+      await new Promise<void>(resolve => setTimeout(resolve));
 
       expect(joint.value).toBe(3);
+
+      joint.supply.done();
+      await promise;
+    });
+    it('contains initial value after supply cut off', async () => {
+      const joint = new ValueJoint(0);
+      const promise = Promise.all([joint.sink(1), joint.sink(2), joint.sink(3)]);
+
+      await new Promise<void>(resolve => setTimeout(resolve));
+
+      joint.supply.done();
+      await promise;
+
+      expect(joint.value).toBe(0);
     });
   });
 
@@ -34,15 +47,17 @@ describe('ValueJoint', () => {
       const joint = new ValueJoint(0);
       let sank: number | undefined;
 
-      await joint.sink(1);
-      await joint.sink(2);
-      await joint.sink(3);
+      const promise = Promise.all([joint.sink(1), joint.sink(2), joint.sink(3)]);
 
+      await new Promise<void>(resolve => setTimeout(resolve));
       await joint.faucet(value => {
         sank = value;
       });
 
       expect(sank).toBe(3);
+
+      joint.supply.done();
+      await promise;
     });
   });
 });

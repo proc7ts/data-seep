@@ -1,4 +1,5 @@
 import { describe, expect, it } from '@jest/globals';
+import { PromiseResolver } from '@proc7ts/async';
 import { noop } from '@proc7ts/primitives';
 import { Supply } from '@proc7ts/supply';
 import { DataSink } from '../data-sink.js';
@@ -14,37 +15,13 @@ describe('DataJoint', () => {
         sank.push(value);
       });
 
-      await joint.sink(1);
-      await joint.sink(2);
-      await joint.sink(3);
+      const promise = Promise.all([joint.sink(1), joint.sink(2), joint.sink(3)]);
 
+      await new Promise<void>(resolve => setTimeout(resolve));
       expect(sank).toEqual([1, 2, 3]);
-    });
-    it('does not pour unaccepted values', async () => {
-      const error = new Error('Unacceptable!');
 
-      class TestJoint extends DataJoint<number> {
-
-        override accept(value: number): void {
-          if (value < 0) {
-            throw error;
-          }
-        }
-
-}
-
-      const joint = new TestJoint();
-      const sank: number[] = [];
-
-      await joint.faucet(value => {
-        sank.push(value);
-      });
-
-      await joint.sink(1);
-      await expect(joint.sink(-1)).rejects.toThrow(error);
-      await joint.sink(3);
-
-      expect(sank).toEqual([1, 3]);
+      joint.supply.done();
+      await promise;
     });
     it('stops pouring values to removed sink', async () => {
       const joint = new DataJoint<number>();
@@ -58,12 +35,30 @@ describe('DataJoint', () => {
         sank.push(-value);
       }, sinkSupply);
 
-      await joint.sink(1);
-      sinkSupply.done();
-      await joint.sink(2);
-      await joint.sink(3);
+      const firstPoured = new PromiseResolver();
+      const secondPoured = new PromiseResolver();
+      const promise = Promise.all([
+        (async () => {
+          firstPoured.resolve();
+          await joint.sink(1);
+        })(),
+        (async () => {
+          await firstPoured.whenDone();
+          sinkSupply.done();
+          secondPoured.resolve();
+          await joint.sink(2);
+        })(),
+        (async () => {
+          await secondPoured.whenDone();
+          await joint.sink(3);
+        })(),
+      ]);
 
+      await new Promise<void>(resolve => setTimeout(resolve));
       expect(sank).toEqual([1, -1, 2, 3]);
+
+      joint.supply.done();
+      await promise;
     });
   });
 

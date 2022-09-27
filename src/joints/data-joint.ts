@@ -32,8 +32,10 @@ export class DataJoint<out T, in TIn extends T = T> {
       return await supply.whenDone();
     }
 
-    await this.accept(value);
-    await Promise.all([...this.#sinks.values()].map(async sink => await sink(value)));
+    await Promise.all([
+      this.valueAccepted(value),
+      ...[...this.#sinks.values()].map(async sink => await sink(value)),
+    ]);
   }
 
   async #addSink(sink: DataSink<T>, sinkSupply?: SupplyOut): Promise<void> {
@@ -80,10 +82,7 @@ export class DataJoint<out T, in TIn extends T = T> {
   }
 
   /**
-   * Called when new data value accepted by {@link sink joint sink} right before being actually sank to sinks
-   * {@link sinkAdded added} to this joint.
-   *
-   * The value won't be sank if this method call failed.
+   * Called when new data value accepted by {@link sink joint sink}.
    *
    * Does nothing by default.
    *
@@ -91,7 +90,7 @@ export class DataJoint<out T, in TIn extends T = T> {
    *
    * @returns Ether nothing, or a promise-like instance resolved when the value accepted.
    */
-  protected accept(_value: TIn): void | PromiseLike<unknown> {
+  protected valueAccepted(_value: TIn): void | PromiseLike<unknown> {
     // Do nothing.
   }
 

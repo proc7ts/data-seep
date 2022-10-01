@@ -1,5 +1,6 @@
 import { DataFaucet, IntakeFaucet } from '../data-faucet.js';
 import { DataInfusion } from '../data-infusion.js';
+import { DataAdmix } from './data-admix.js';
 import { DataMix } from './data-mix.js';
 
 /**
@@ -11,31 +12,29 @@ import { DataMix } from './data-mix.js';
  *
  * @typeParam TMix - Supported data mix.
  */
-export interface DataMixCompound<TMix extends DataMix = DataMix> {
+export interface DataMixCompound {
   /**
-   * Pours data infused into the `mix` by particular `infusion`.
+   * Pours updates to admixes infusing data by particular `infusion`.
    *
    * @typeParam T - Infused data type. I.e. the type of data poured by returned faucet.
    * @typeParam TOptions - Infusion options.
    * @param infusion - Source data infusion.
-   * @param mix - Source data mix.
    *
-   * @returns Infused data faucet.
+   * @returns Admix updates faucet.
    */
-  pour<T, TOptions extends unknown[]>(
+  watch<T, TOptions extends unknown[]>(
     infusion: DataInfusion<T, TOptions>,
-    mix: TMix,
-  ): DataFaucet<T>;
+  ): DataFaucet<DataAdmix.Update<T, TOptions>>;
 }
 
 /**
  * Mixed data compounder used by {@link DataMixer data mixer} to customize data mix implementation.
  *
  * @typeParam TMix - Type of supported data mix.
- * @param compound - Mixed data compound.
+ * @param createCompound - Mixed data compound factory function, accepting a data mix instance as its only parameter.
  *
  * @returns Custom data mix faucet.
  */
-export type DataMixCompounder<TMix extends DataMix = DataMix> = (
-  compound: DataMixCompound<TMix>,
+export type DataMixCompounder<out TMix extends DataMix = DataMix> = (
+  createCompound: (mix: TMix) => DataMixCompound,
 ) => IntakeFaucet<TMix>;

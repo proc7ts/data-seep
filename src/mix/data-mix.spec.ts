@@ -1,10 +1,7 @@
 import { beforeEach, describe, expect, it } from '@jest/globals';
-import { noop } from '@proc7ts/primitives';
 import { neverSupply } from '@proc7ts/supply';
 import { DataFaucet } from '../data-faucet.js';
-import { DataInfusion } from '../data-infusion.js';
 import { withValue } from '../infusions/with-value.js';
-import { DataInfusionError } from './data-infusion.error.js';
 import { DataMixer } from './data-mixer.js';
 
 describe('DataMix', () => {
@@ -15,7 +12,7 @@ describe('DataMix', () => {
   });
 
   describe('pour', () => {
-    it('provides access to infused data', async () => {
+    it('pours infused data', async () => {
       mixer.add({ infuse: withTestData, pour: () => withTestData(1) });
 
       let sank: number | undefined;
@@ -27,6 +24,19 @@ describe('DataMix', () => {
       });
 
       expect(sank).toBe(1);
+    });
+    it('pours nothing if no data infused', async () => {
+      let sank: number | undefined;
+
+      await mixer.mix(async mix => {
+        await mix.pour(withTestData)(value => {
+          sank = value;
+        });
+      });
+
+      await new Promise(resolve => setImmediate(resolve));
+
+      expect(sank).toBeUndefined();
     });
     it('respects sink supply', async () => {
       mixer.add({ infuse: withTestData, pour: () => withTestData(1) });
@@ -40,17 +50,6 @@ describe('DataMix', () => {
       });
 
       expect(sank).toBeUndefined();
-    });
-    it('fails if no data infused', async () => {
-      await expect(
-        mixer.mix(async mix => {
-          await mix.pour(withTestData)(noop);
-        }),
-      ).rejects.toThrow(
-        new DataInfusionError(undefined, {
-          infusion: withTestData as DataInfusion<unknown, unknown[]>,
-        }),
-      );
     });
   });
 

@@ -1,11 +1,26 @@
+import { Supply } from '@proc7ts/supply';
 import { DataFaucet } from '../data-faucet.js';
 import { DataInfusion } from '../data-infusion.js';
 import { withAll, WithAll } from '../infusions/with-all.js';
+import { DataAdmix } from './data-admix.js';
 
 /**
  * Data mix provides access to data {@link DataMixer#mix mixed into data mixer}.
  */
 export abstract class DataMix {
+
+  /**
+   * Pours updates to admixes infusing data by particular `infusion`.
+   *
+   * @typeParam T - Infused data type. I.e. the type of data poured by returned faucet.
+   * @typeParam TOptions - Infusion options.
+   * @param infusion - Source data infusion.
+   *
+   * @returns Admix updates faucet.
+   */
+  abstract watch<T, TOptions extends unknown[]>(
+    infusion: DataInfusion<T, TOptions>,
+  ): DataFaucet<DataAdmix.Update<T, TOptions>>;
 
   /**
    * Pours the data originated from the given data `infusion`.
@@ -16,7 +31,13 @@ export abstract class DataMix {
    *
    * @returns Infused data faucet.
    */
-  abstract pour<T, TOptions extends unknown[]>(infusion: DataInfusion<T, TOptions>): DataFaucet<T>;
+  pour<T, TOptions extends unknown[]>(infusion: DataInfusion<T, TOptions>): DataFaucet<T> {
+    const admixFaucet = this.watch(infusion);
+
+    return async (sink, sinkSupply = new Supply()) => await admixFaucet(async ({ faucet }) => {
+        await faucet?.(sink, sinkSupply);
+      });
+  }
 
   /**
    * Pours record(s) with property values originated from all of the given infuses.

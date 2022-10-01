@@ -72,7 +72,7 @@ export class BufferJoint<out T, in TIn extends T = T>
    *
    * @returns Promise resolved when the value removed from the buffer, or {@link supply joint supply} cut off.
    */
-  protected override valueAccepted(value: TIn): Promise<void> {
+  protected override acceptValue(value: TIn): Promise<void> {
     return new Promise(resolve => this.#buffer.add(value, resolve));
   }
 

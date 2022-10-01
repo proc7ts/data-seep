@@ -1,11 +1,8 @@
 import { beforeEach, describe, expect, it } from '@jest/globals';
-import { noop } from '@proc7ts/primitives';
 import { neverSupply } from '@proc7ts/supply';
 import { DataFaucet } from '../data-faucet.js';
-import { DataInfusion } from '../data-infusion.js';
 import { withValue } from '../infusions/with-value.js';
 import { admix } from './admixes/mod.js';
-import { DataInfusionError } from './data-infusion.error.js';
 import { DataMixer } from './data-mixer.js';
 
 describe('DataMixer', () => {
@@ -17,14 +14,14 @@ describe('DataMixer', () => {
 
   describe('add', () => {
     it('replaces previous admix', async () => {
-      const supply1 = mixer.add(admix(withTestData, 1));
+      const handle1 = mixer.add(admix(withTestData, 1));
 
-      expect(supply1.isOff).toBeNull();
+      expect(handle1.supply.isOff).toBeNull();
 
-      const supply2 = mixer.add(admix(withTestData, 2));
+      const handle2 = mixer.add(admix(withTestData, 2));
 
-      expect(supply1.isOff?.failed).toBe(false);
-      expect(supply2.isOff).toBeNull();
+      expect(handle1.supply.isOff?.failed).toBe(false);
+      expect(handle2.supply.isOff).toBeNull();
 
       let sank: number | undefined;
 
@@ -39,21 +36,22 @@ describe('DataMixer', () => {
     it('does not add completed admix', async () => {
       mixer.add(admix(withTestData, 1));
 
-      mixer.add({
+      const handle = mixer.add({
         infuse: withTestData,
         supply: neverSupply(),
         pour: () => withTestData(13),
       });
 
-      await expect(
-        mixer.mix(async mix => {
-          await mix.pour(withTestData)(noop);
-        }),
-      ).rejects.toThrow(
-        new DataInfusionError(undefined, {
-          infusion: withTestData as DataInfusion<unknown, unknown[]>,
-        }),
-      );
+      let sank: number | undefined;
+
+      await mixer.mix(async mix => {
+        await mix.pour(withTestData)(value => {
+          sank = value;
+        });
+      });
+      await handle.whenSank();
+
+      expect(sank).toBeUndefined();
     });
   });
 

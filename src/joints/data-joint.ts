@@ -1,3 +1,5 @@
+import { PromiseResolver } from '@proc7ts/async';
+import { noop } from '@proc7ts/primitives';
 import { Supply, SupplyOut } from '@proc7ts/supply';
 import { DataFaucet } from '../data-faucet.js';
 import { DataSink } from '../data-sink.js';
@@ -26,16 +28,9 @@ export class DataJoint<out T, in TIn extends T = T> {
   }
 
   async #pour(value: TIn): Promise<void> {
-    const { supply } = this;
+    const { whenAccepted, whenSank } = this.add(value);
 
-    if (supply.isOff) {
-      return await supply.whenDone();
-    }
-
-    await Promise.all([
-      this.valueAccepted(value),
-      ...[...this.#sinks.values()].map(async sink => await sink(value)),
-    ]);
+    await Promise.all([whenAccepted?.(), whenSank()]);
   }
 
   async #addSink(sink: DataSink<T>, sinkSupply?: SupplyOut): Promise<void> {
@@ -82,15 +77,61 @@ export class DataJoint<out T, in TIn extends T = T> {
   }
 
   /**
-   * Called when new data value accepted by {@link sink joint sink}.
+   * Adds the value to the this joint.
+   *
+   * @param value - Value to add.
+   *
+   * @returns Value addition result.
+   */
+  add(value: TIn): DataJoint.Addition {
+    const { supply } = this;
+
+    if (supply.isOff) {
+      const whenSank = async (): Promise<void> => await supply.whenDone();
+
+      return { whenAccepted: whenSank, whenSank };
+    }
+
+    return {
+      whenAccepted: this.#acceptValue(value),
+      whenSank: this.#pourValue(value),
+    };
+  }
+
+  #acceptValue(value: TIn): (() => Promise<void>) | undefined {
+    const whenAccepted = this.acceptValue(value);
+
+    if (!whenAccepted) {
+      return;
+    }
+
+    const valueAccepted = new PromiseResolver();
+
+    valueAccepted.resolve(Promise.resolve(whenAccepted).then(noop));
+
+    return async () => await valueAccepted.whenDone();
+  }
+
+  #pourValue(value: TIn): () => Promise<void> {
+    const valueSank = new PromiseResolver();
+    const whenSank = Promise.all([...this.#sinks.values()].map(async sink => await sink(value)));
+
+    valueSank.resolve(whenSank.then(noop));
+
+    return async () => await valueSank.whenDone();
+  }
+
+  /**
+   * Called when new data value {@link add added} to accept the new value.
    *
    * Does nothing by default.
    *
    * @param _value - Accepted data value.
    *
-   * @returns Ether nothing, or a promise-like instance resolved when the value accepted.
+   * @returns Ether nothing if the value accepted immediately, or a promise-like instance resolved when the value
+   * accepted.
    */
-  protected valueAccepted(_value: TIn): void | PromiseLike<unknown> {
+  protected acceptValue(_value: TIn): void | PromiseLike<unknown> {
     // Do nothing.
   }
 
@@ -109,4 +150,27 @@ export class DataJoint<out T, in TIn extends T = T> {
     // Do nothing.
   }
 
+}
+
+export namespace DataJoint {
+  /**
+   * A result of value {@link DataJoint#add addition} to tdata joint.
+   *
+   * Indicates the value has been added. May also be used to await for value acceptance.
+   */
+  export interface Addition {
+    /**
+     * Waits for the value to be {@link DataJoint#accept accepted}.
+     *
+     * When absent, the data value accepted immediately.
+     */
+    whenAccepted?(this: void): Promise<void>;
+
+    /**
+     * Waits for the valuie to be sank by data sinks {@link DataJoint#sinkAdded added} to the joint.
+     *
+     * @returns Promise resolved when data sank.
+     */
+    whenSank(this: void): Promise<void>;
+  }
 }

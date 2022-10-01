@@ -44,3 +44,52 @@ export interface DataAdmix<
    */
   pour(mix: TMix): IntakeFaucet<T>;
 }
+
+export namespace DataAdmix {
+  /**
+   * Admix handle created when admix {@link DataMixer#add added} to mix.
+   */
+  export interface Handle {
+    /**
+     * Admix supply.
+     *
+     * Once cut off, the `admix` will be removed from the mix and thus won't pour any data.
+     */
+    readonly supply: Supply;
+
+    /**
+     * Awaits for admix to actually added to the mix and sank by consumers.
+     *
+     * @returns Promise resolved when admix sank by its consumers.
+     */
+    whenSank(this: void): Promise<void>;
+  }
+
+  /**
+   * An update to admix.
+   *
+   * Either {@link Added added admix info}, or `void` when admix removed.
+   *
+   * @typeParam T - Type of data infused by admix.
+   */
+  export type Update<T> = Added<T> | void;
+
+  /**
+   * Information about admix {@link DataMixer#add added} to mix.
+   *
+   * @typeParam T - Type of data infused by added admix.
+   */
+  export interface Added<out T> {
+    /**
+     * Admix supply.
+     *
+     * Once cut off, the admix will be removed from the mix and thus won't pour any data.
+     */
+    readonly supply: Supply;
+
+    /**
+     * Faucet that pours the data infused by admix.
+     */
+    readonly faucet: IntakeFaucet<T>;
+  }
+}

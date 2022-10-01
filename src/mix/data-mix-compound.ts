@@ -1,5 +1,6 @@
 import { DataFaucet, IntakeFaucet } from '../data-faucet.js';
 import { DataInfusion } from '../data-infusion.js';
+import { DataAdmix } from './data-admix.js';
 import { DataMix } from './data-mix.js';
 
 /**
@@ -13,15 +14,17 @@ import { DataMix } from './data-mix.js';
  */
 export interface DataMixCompound {
   /**
-   * Pours data infused into the `mix` by particular `infusion`.
+   * Pours updates to admixes infusing data by particular `infusion`.
    *
    * @typeParam T - Infused data type. I.e. the type of data poured by returned faucet.
    * @typeParam TOptions - Infusion options.
    * @param infusion - Source data infusion.
    *
-   * @returns Infused data faucet.
+   * @returns Admix updates faucet.
    */
-  pour<T, TOptions extends unknown[]>(infusion: DataInfusion<T, TOptions>): DataFaucet<T>;
+  watch<T, TOptions extends []>(
+    infusion: DataInfusion<T, TOptions>,
+  ): DataFaucet<DataAdmix.Update<T>>;
 }
 
 /**

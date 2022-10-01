@@ -48,7 +48,7 @@ export class ValueJoint<out T, in TIn extends T = T> extends DataJoint<T, TIn> {
    *
    * @returns Promise resolved when the value replaced with another one, or {@link supply join supply} cut off.
    */
-  protected override valueAccepted(value: TIn): Promise<void> {
+  protected override acceptValue(value: TIn): Promise<void> {
     return new Promise<void>(resolve => {
       const dropPrevValue = this.#dropValue;
 

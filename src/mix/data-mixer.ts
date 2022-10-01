@@ -82,16 +82,16 @@ export class DataMixer<TMix extends DataMix = DataMix> {
    * @returns Promise resolved when the mix poured and sank.
    */
   async mix(sink: DataSink<TMix>, sinkSupply: Supply = new Supply()): Promise<void> {
-    const compound = new DataMix$Compound(this.#admixes);
-    const mixFaucet = this.#compounder(compound);
+    const mixFaucet = this.#compounder(mix => new DataMix$Compound(mix, this.#admixes));
 
     await mixFaucet(sink, sinkSupply);
   }
 
 }
 
-class DataMix$Compound<TMix extends DataMix> implements DataMixCompound<TMix> {
+class DataMix$Compound<TMix extends DataMix> implements DataMixCompound {
 
+  readonly #mix: TMix;
   readonly #admixes = new Map<
     DataInfusion<unknown, unknown[]>,
     DataAdmixEntry<unknown, unknown[], TMix>
@@ -100,12 +100,14 @@ class DataMix$Compound<TMix extends DataMix> implements DataMixCompound<TMix> {
   readonly #faucets = new Map<DataInfusion<unknown, unknown[]>, DataFaucet<unknown>>();
 
   constructor(
-    seeps: Map<DataInfusion<unknown, unknown[]>, DataAdmixEntry<unknown, unknown[], TMix>>,
+    mix: TMix,
+    admixes: Map<DataInfusion<unknown, unknown[]>, DataAdmixEntry<unknown, unknown[], TMix>>,
   ) {
-    this.#admixes = seeps;
+    this.#mix = mix;
+    this.#admixes = admixes;
   }
 
-  pour<T, TOptions extends []>(infusion: DataInfusion<T, TOptions>, mix: TMix): DataFaucet<T> {
+  pour<T, TOptions extends []>(infusion: DataInfusion<T, TOptions>): DataFaucet<T> {
     let faucet = this.#faucets.get(infusion as DataInfusion<unknown, unknown[]>) as
       | DataFaucet<T>
       | undefined;
@@ -116,7 +118,7 @@ class DataMix$Compound<TMix extends DataMix> implements DataMixCompound<TMix> {
       ) as DataAdmixEntry<T, TOptions, TMix>;
 
       if (admix) {
-        const admixFaucet = admix.pour(mix);
+        const admixFaucet = admix.pour(this.#mix);
 
         faucet = async (sink, sinkSpply = new Supply()) => {
           await admixFaucet(sink, sinkSpply);
@@ -136,9 +138,11 @@ class DataMix$Compound<TMix extends DataMix> implements DataMixCompound<TMix> {
 }
 
 function DataMix$createDefault<TMix extends DataMix>(
-  compound: DataMixCompound<TMix>,
+  createCompound: (mix: TMix) => DataMixCompound,
 ): DataFaucet<TMix> {
-  return withValue(new DefaultDataMix(compound) as DataMix as TMix);
+  return withValue(
+    new DefaultDataMix(createCompound as (mix: DataMix) => DataMixCompound) as DataMix as TMix,
+  );
 }
 
 class DataAdmixEntry<T, TOptions extends unknown[], TMix extends DataMix> {

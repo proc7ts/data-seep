@@ -11,31 +11,27 @@ import { DataMix } from './data-mix.js';
  *
  * @typeParam TMix - Supported data mix.
  */
-export interface DataMixCompound<TMix extends DataMix = DataMix> {
+export interface DataMixCompound {
   /**
    * Pours data infused into the `mix` by particular `infusion`.
    *
    * @typeParam T - Infused data type. I.e. the type of data poured by returned faucet.
    * @typeParam TOptions - Infusion options.
    * @param infusion - Source data infusion.
-   * @param mix - Source data mix.
    *
    * @returns Infused data faucet.
    */
-  pour<T, TOptions extends unknown[]>(
-    infusion: DataInfusion<T, TOptions>,
-    mix: TMix,
-  ): DataFaucet<T>;
+  pour<T, TOptions extends unknown[]>(infusion: DataInfusion<T, TOptions>): DataFaucet<T>;
 }
 
 /**
  * Mixed data compounder used by {@link DataMixer data mixer} to customize data mix implementation.
  *
  * @typeParam TMix - Type of supported data mix.
- * @param compound - Mixed data compound.
+ * @param createCompound - Mixed data compound factory function, accepting a data mix instance as its only parameter.
  *
  * @returns Custom data mix faucet.
  */
-export type DataMixCompounder<TMix extends DataMix = DataMix> = (
-  compound: DataMixCompound<TMix>,
+export type DataMixCompounder<out TMix extends DataMix = DataMix> = (
+  createCompound: (mix: TMix) => DataMixCompound,
 ) => IntakeFaucet<TMix>;

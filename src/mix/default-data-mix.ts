@@ -15,15 +15,15 @@ export class DefaultDataMix extends DataMix {
   /**
    * Constructs data mix.
    *
-   * @param compound - Mixed data compound.
+   * @param createCompound - Mixed data compound factory function, accepting a data mix instance as its only parameter.
    */
-  constructor(compound: DataMixCompound) {
+  constructor(createCompound: (mix: DataMix) => DataMixCompound) {
     super();
-    this.#compound = compound;
+    this.#compound = createCompound(this);
   }
 
   override pour<T, TOptions extends []>(infusion: DataInfusion<T, TOptions>): DataFaucet<T> {
-    return this.#compound.pour(infusion, this);
+    return this.#compound.pour(infusion);
   }
 
 }

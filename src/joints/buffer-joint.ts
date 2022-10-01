@@ -29,12 +29,14 @@ export class BufferJoint<out T, in TIn extends T = T>
     if (buffer == null) {
       this.#buffer = new BufferJoint$InfiniteBuffer();
     } else if (typeof buffer === 'number') {
-      const capacity = Math.max(0, buffer);
+      const capacity = Math.floor(Math.max(0, buffer));
 
       if (!Number.isFinite(capacity)) {
         this.#buffer = new BufferJoint$InfiniteBuffer();
-      } else if (capacity < 1) {
+      } else if (!capacity) {
         this.#buffer = BufferJoint$EmptyBuffer;
+      } else if (capacity === 1) {
+        this.#buffer = new BufferJoint$SingleValueBuffer();
       } else {
         this.#buffer = new BufferJoint$CyclicBuffer(buffer);
       }
@@ -102,7 +104,7 @@ export namespace BufferJoint {
      * Adds entry to the buffer.
      *
      * @param value - Entry to buffer.
-     * @param drop - Function to call when the value droppped from the buffer.
+     * @param drop - Function to call when the value dropped from the buffer.
      */
     add(value: T, drop: () => void): void;
 
@@ -144,6 +146,31 @@ class BufferJoint$InfiniteBuffer<T> implements BufferJoint.Buffer<T> {
   *[Symbol.iterator](): IterableIterator<T> {
     for (const { value } of this.#entries) {
       yield value;
+    }
+  }
+
+}
+
+class BufferJoint$SingleValueBuffer<T> implements BufferJoint.Buffer<T> {
+
+  #entry?: BufferJoint$Entry<T>;
+
+  add(value: T, drop: () => void): void {
+    const prevEntry = this.#entry;
+
+    this.#entry = { value, drop };
+
+    prevEntry?.drop();
+  }
+
+  clear(): void {
+    this.#entry?.drop();
+    this.#entry = undefined;
+  }
+
+  *[Symbol.iterator](): IterableIterator<T> {
+    if (this.#entry) {
+      yield this.#entry.value;
     }
   }
 

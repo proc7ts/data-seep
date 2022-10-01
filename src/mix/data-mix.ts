@@ -20,7 +20,7 @@ export abstract class DataMix {
    */
   abstract watch<T, TOptions extends unknown[]>(
     infusion: DataInfusion<T, TOptions>,
-  ): DataFaucet<DataAdmix.Update<T>>;
+  ): DataFaucet<DataAdmix.Update<T, TOptions>>;
 
   /**
    * Pours the data originated from the given data `infusion`.
@@ -34,10 +34,8 @@ export abstract class DataMix {
   pour<T, TOptions extends unknown[]>(infusion: DataInfusion<T, TOptions>): DataFaucet<T> {
     const admixFaucet = this.watch(infusion);
 
-    return (sink, sinkSupply = new Supply()) => admixFaucet(async update => {
-        if (update) {
-          await update.faucet(sink, sinkSupply);
-        }
+    return async (sink, sinkSupply = new Supply()) => await admixFaucet(async ({ faucet }) => {
+        await faucet?.(sink, sinkSupply);
       });
   }
 

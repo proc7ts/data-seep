@@ -22,9 +22,9 @@ export interface DataMixCompound {
    *
    * @returns Admix updates faucet.
    */
-  watch<T, TOptions extends []>(
+  watch<T, TOptions extends unknown[]>(
     infusion: DataInfusion<T, TOptions>,
-  ): DataFaucet<DataAdmix.Update<T>>;
+  ): DataFaucet<DataAdmix.Update<T, TOptions>>;
 }
 
 /**

@@ -24,9 +24,9 @@ export class DefaultDataMix extends DataMix {
     this.#compound = createCompound(this);
   }
 
-  override watch<T, TOptions extends []>(
+  override watch<T, TOptions extends unknown[]>(
     infusion: DataInfusion<T, TOptions>,
-  ): DataFaucet<DataAdmix.Update<T>> {
+  ): DataFaucet<DataAdmix.Update<T, TOptions>> {
     const admixFaucet = this.#compound.watch(infusion);
 
     return async (sink, sinkSupply = new Supply()) => await admixFaucet(sink, sinkSupply);

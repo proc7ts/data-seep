@@ -68,18 +68,25 @@ export namespace DataAdmix {
   /**
    * An update to admix.
    *
-   * Either {@link Added added admix info}, or `void` when admix removed.
+   * Either {@link Added added}, or {@link Removed} admix info.
    *
    * @typeParam T - Type of data infused by admix.
+   * @typeParam TOptions - Tuple type representing infusion options.
    */
-  export type Update<T> = Added<T> | void;
+  export type Update<T, TOptions extends unknown[]> = Added<T, TOptions> | Removed<T, TOptions>;
 
   /**
-   * Information about admix {@link DataMixer#add added} to mix.
+   * Information about admix {@link DataMixer#add added} to the mix.
    *
    * @typeParam T - Type of data infused by added admix.
+   * @typeParam TOptions - Tuple type representing infusion options.
    */
-  export interface Added<out T> {
+  export interface Added<out T, in TOptions extends unknown[]> {
+    /**
+     * The infusion of the data poured by added admix.
+     */
+    readonly infuse: DataInfusion<T, TOptions>;
+
     /**
      * Admix supply.
      *
@@ -91,5 +98,25 @@ export namespace DataAdmix {
      * Faucet that pours the data infused by admix.
      */
     readonly faucet: IntakeFaucet<T>;
+  }
+
+  /**
+   * Information about admix removed from the mix.
+   *
+   * @typeParam T - Type of data infused by added admix.
+   * @typeParam TOptions - Tuple type representing infusion options.
+   */
+  export interface Removed<out T, in TOptions extends unknown[]> {
+    /**
+     * The infusion of the data poured by removed admix.
+     */
+    readonly infuse: DataInfusion<T, TOptions>;
+
+    /**
+     * Cut off  admix supply.
+     */
+    readonly supply: Supply;
+
+    readonly faucet?: undefined;
   }
 }

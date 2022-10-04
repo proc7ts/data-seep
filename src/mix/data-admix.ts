@@ -212,6 +212,13 @@ export namespace DataAdmix {
     in out TMix extends DataMix = DataMix,
   > {
     /**
+     * Infusion supply.
+     *
+     * Once cut off, all admixes for the infusion will be removed from the mix.
+     */
+    readonly supply: Supply;
+
+    /**
      * Pours data infused to the given data `mix`.
      *
      * @param mix - Target data mix.

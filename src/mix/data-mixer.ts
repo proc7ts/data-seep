@@ -70,7 +70,7 @@ export class DataMixer<in out TMix extends DataMix = DataMix> {
       };
     }
 
-    const { supply } = entry;
+    const { supply } = entry.blend;
     const { whenSank } = joint.add(entry);
 
     supply.whenOff(() => {

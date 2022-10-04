@@ -73,14 +73,10 @@ export class DataAdmix$Entry<T, TOptions extends unknown[], TMix extends DataMix
     return this.#blend;
   }
 
-  get supply(): Supply {
-    return this.#supply;
-  }
-
   pour(mix: TMix): IntakeFaucet<T> {
     const faucet = this.blend.pour(mix);
 
-    return (sink, sinkSupply) => faucet(sink, this.supply.derive().needs(sinkSupply));
+    return (sink, sinkSupply) => faucet(sink, this.#supply.derive().needs(sinkSupply));
   }
 
   extend(
@@ -93,7 +89,7 @@ export class DataAdmix$Entry<T, TOptions extends unknown[], TMix extends DataMix
 
     if (admix.replace) {
       if (supply.isOff) {
-        this.supply.done();
+        this.#supply.done();
 
         return;
       }
@@ -105,17 +101,17 @@ export class DataAdmix$Entry<T, TOptions extends unknown[], TMix extends DataMix
         replaced: {
           admix: this.admix,
           blend: this.blend,
-          supply: this.supply,
+          supply: this.#supply,
         },
       });
     } else if (this.blend.extend) {
       blend = this.blend.extend(admix);
 
-      if (supply.isOff && this.supply.isOff) {
+      if (supply.isOff && this.#supply.isOff) {
         return;
       }
     } else {
-      this.supply.done();
+      this.#supply.done();
 
       if (supply.isOff) {
         return;
@@ -144,6 +140,10 @@ class SingleAdmix$Blend<T, TOptions extends unknown[], TMix extends DataMix>
     this.#infuse = infuse;
     this.#admix = admix;
     this.#supply = supply;
+  }
+
+  get supply(): Supply {
+    return this.#supply;
   }
 
   pour(mix: TMix): IntakeFaucet<T> {

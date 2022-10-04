@@ -1,6 +1,6 @@
 import { Supply } from '@proc7ts/supply';
 import { IntakeFaucet } from '../data-faucet.js';
-import { DataInfusion } from '../data-infusion.js';
+import { DataAdmix } from './data-admix.js';
 import { DataMix } from './data-mix.js';
 
 /**
@@ -14,14 +14,9 @@ import { DataMix } from './data-mix.js';
  */
 export interface SingleAdmix<
   out T,
-  in TOptions extends unknown[] = [],
+  in out TOptions extends unknown[],
   out TMix extends DataMix = DataMix,
 > {
-  /**
-   * The infusion of the data poured by this admix.
-   */
-  readonly infuse: DataInfusion<T, TOptions>;
-
   /**
    * Optional admix supply.
    *
@@ -34,11 +29,11 @@ export interface SingleAdmix<
   /**
    * Pours data infused to the given data `mix`.
    *
-   * @param mix - Target data mix.
+   * @param context - Data pouring context.
    *
    * @returns Infused data faucet.
    */
-  pour(mix: TMix): IntakeFaucet<T>;
+  pour(context: DataAdmix.PouringContext<T, TOptions, TMix>): IntakeFaucet<T>;
 
   readonly blend?: undefined;
 

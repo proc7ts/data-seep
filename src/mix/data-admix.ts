@@ -10,7 +10,7 @@ import { SingleAdmix } from './single.admix.js';
  * Data admixture (ingredient) of {@link DataMix data mix}.
  *
  * When {@link DataMixer#add added} to data mixture, the resulting data mix provides access to the data poured by
- * corresponding {@link SingleAdmix#infuse data infusion}.
+ * corresponding data infusion.
  *
  * Names of functions creating data admixes supposed to have an `admix` prefix. E.g. {@link admix}
  * or {@link admixValue},
@@ -101,13 +101,52 @@ export namespace DataAdmix {
   }
 
   /**
+   * Context of data pouring by admix.
+   *
+   * Passed to admix in order to {@link SingleAdmix#pour pour} infused data.
+   *
+   * @typeParam T - Type of data infused by admix.
+   * @typeParam TOptions - Tuple type representing infusion options.
+   * @typeParam TMix - Type of resulting data mix.
+   */
+  export interface PouringContext<out T, in TOptions extends unknown[], out TMix extends DataMix> {
+    /**
+     * The infusion of data to pour by admix.
+     */
+    readonly infuse: DataInfusion<T, TOptions>;
+
+    /**
+     * Target data mix.
+     */
+    readonly mix: TMix;
+
+    /**
+     * Admix supply.
+     *
+     * The one provided {@link SingleAdmix#supply explicitly}, or the one created automatically otherwise.
+     */
+    readonly supply: Supply;
+  }
+
+  /**
    * Context of data admix addition.
    *
    * Passed by {@link DataMixer#add} method to admix in order to {@link BlendedAdmix#blend create} new data blend.
    *
+   * @typeParam T - Type of data infused by admix.
+   * @typeParam TOptions - Tuple type representing infusion options.
    * @typeParam TMix - Type of resulting data mix.
    */
-  export interface AdditionContext<in out TMix extends DataMix> {
+  export interface AdditionContext<
+    out T,
+    in TOptions extends unknown[],
+    in out TMix extends DataMix,
+  > {
+    /**
+     * The infusion of data to pour by admix.
+     */
+    readonly infuse: DataInfusion<T, TOptions>;
+
     /**
      * Data mixer the admix is added by.
      */
@@ -116,7 +155,7 @@ export namespace DataAdmix {
     /**
      * Admix supply.
      *
-     * The one provided {@link DataAdmix#supply explicitly}, or the one created automatically otherwise.
+     * The one provided {@link BlendedAdmix#supply explicitly}, or the one created automatically otherwise.
      */
     readonly supply: Supply;
   }
@@ -126,15 +165,15 @@ export namespace DataAdmix {
    *
    * Passed by {@link DataMixer#add} method to admix in order to {@link BlendedAdmix#replace replace} existing admix.
    *
-   * @typeParam T - Type of data infused by added admix.
+   * @typeParam T - Type of data infused by admix.
    * @typeParam TOptions - Tuple type representing infusion options.
    * @typeParam TMix - Type of resulting data mix.
    */
   export interface ReplacementContext<
     out T,
-    in TOptions extends unknown[],
+    in out TOptions extends unknown[],
     in out TMix extends DataMix = DataMix,
-  > extends AdditionContext<TMix> {
+  > extends AdditionContext<T, TOptions, TMix> {
     /**
      * Replaced admix data info.
      */
@@ -169,7 +208,7 @@ export namespace DataAdmix {
    */
   export interface Blend<
     out T,
-    in TOptions extends unknown[],
+    in out TOptions extends unknown[],
     in out TMix extends DataMix = DataMix,
   > {
     /**

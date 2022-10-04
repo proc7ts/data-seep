@@ -8,7 +8,7 @@ import { DataMixer$Admixes } from './data-mixer.admixes.js';
 /**
  * @internal
  */
-export class DataMix$Compound<in out TMix extends DataMix> implements DataMixCompound {
+export class DataMix$Compound<TMix extends DataMix> implements DataMixCompound {
 
   readonly #mix: TMix;
   readonly #admixes: DataMixer$Admixes<TMix>;

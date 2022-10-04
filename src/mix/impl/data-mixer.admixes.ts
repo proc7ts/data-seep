@@ -7,7 +7,7 @@ import { DataAdmix$Entry, DataAdmix$Removed } from './data-admix.entry.js';
 /**
  * @internal
  */
-export class DataMixer$Admixes<in out TMix extends DataMix> {
+export class DataMixer$Admixes<TMix extends DataMix> {
 
   readonly #admixes = new Map<
     DataInfusion<unknown, unknown[]>,

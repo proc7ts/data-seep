@@ -1,5 +1,4 @@
 import { Supply } from '@proc7ts/supply';
-import { DataInfusion } from '../data-infusion.js';
 import { DataAdmix } from './data-admix.js';
 import { DataMix } from './data-mix.js';
 import { DataMixer } from './data-mixer.js';
@@ -15,14 +14,9 @@ import { DataMixer } from './data-mixer.js';
  */
 export interface BlendedAdmix<
   out T,
-  in TOptions extends unknown[] = [],
+  in out TOptions extends unknown[] = [],
   in out TMix extends DataMix = DataMix,
 > {
-  /**
-   * The infusion of the data poured by this admix.
-   */
-  readonly infuse: DataInfusion<T, TOptions>;
-
   /**
    * Optional admix supply.
    *
@@ -37,17 +31,16 @@ export interface BlendedAdmix<
    *
    * This method called once this admix {@link DataMixer#add added} to the mix.
    *
-   * A {@link replace} method is called instead if defined and admix for the same {@link infuse infusion} already added
-   * the the mix.
+   * A {@link replace} method is called instead if defined and admix for the same infusion already added to the mix.
    *
    * @param context - Context of admix addition.
    *
    * @returns Data blend used to pour infused data.
    */
-  blend(context: DataAdmix.AdditionContext<TMix>): DataAdmix.Blend<T, TOptions, TMix>;
+  blend(context: DataAdmix.AdditionContext<T, TOptions, TMix>): DataAdmix.Blend<T, TOptions, TMix>;
 
   /**
-   * Replaces existing admix fior the same {@link infuse infusion}.
+   * Replaces existing admix fior the same infusion.
    *
    * @param context - Context of admix replacement.
    *

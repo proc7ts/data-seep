@@ -1,5 +1,6 @@
 import { Supply } from '@proc7ts/supply';
 import { IntakeFaucet } from '../../data-faucet.js';
+import { DataInfusion } from '../../data-infusion.js';
 import { DataAdmix } from '../data-admix.js';
 import { DataMix } from '../data-mix.js';
 import { DataMixer } from '../data-mixer.js';
@@ -17,10 +18,11 @@ export interface DataAdmix$Removed {
 /**
  * @internal
  */
-export class DataAdmix$Entry<out T, in TOptions extends unknown[], in out TMix extends DataMix> {
+export class DataAdmix$Entry<T, TOptions extends unknown[], TMix extends DataMix> {
 
   static create<T, TOptions extends unknown[], TMix extends DataMix>(
     mixer: DataMixer<TMix>,
+    infuse: DataInfusion<T, TOptions>,
     admix: DataAdmix<T, TOptions, TMix>,
   ): DataAdmix$Entry<T, TOptions, TMix> | undefined {
     const { supply = new Supply() } = admix;
@@ -29,22 +31,24 @@ export class DataAdmix$Entry<out T, in TOptions extends unknown[], in out TMix e
       return;
     }
 
-    return new DataAdmix$Entry(admix, this.#createBlend(mixer, admix, supply), supply);
+    return new DataAdmix$Entry(admix, this.#createBlend(mixer, infuse, admix, supply), supply);
   }
 
   static #createBlend<T, TOptions extends unknown[], TMix extends DataMix>(
     mixer: DataMixer<TMix>,
+    infuse: DataInfusion<T, TOptions>,
     admix: DataAdmix<T, TOptions, TMix>,
     supply: Supply,
   ): DataAdmix.Blend<T, TOptions, TMix> {
     if (admix.blend) {
       return admix.blend({
         mixer,
+        infuse,
         supply,
       });
     }
 
-    return new SingleAdmix$Blend(admix);
+    return new SingleAdmix$Blend(infuse, admix, supply);
   }
 
   readonly #admix: DataAdmix<T, TOptions, TMix>;
@@ -81,6 +85,7 @@ export class DataAdmix$Entry<out T, in TOptions extends unknown[], in out TMix e
 
   extend(
     mixer: DataMixer<TMix>,
+    infuse: DataInfusion<T, TOptions>,
     admix: DataAdmix<T, TOptions, TMix>,
   ): DataAdmix$Entry<T, TOptions, TMix> | undefined {
     const { supply = new Supply() } = admix;
@@ -95,6 +100,7 @@ export class DataAdmix$Entry<out T, in TOptions extends unknown[], in out TMix e
 
       blend = admix.replace({
         mixer,
+        infuse,
         supply,
         replaced: {
           admix: this.admix,
@@ -115,7 +121,7 @@ export class DataAdmix$Entry<out T, in TOptions extends unknown[], in out TMix e
         return;
       }
 
-      blend = DataAdmix$Entry.#createBlend(mixer, admix, supply);
+      blend = DataAdmix$Entry.#createBlend(mixer, infuse, admix, supply);
     }
 
     return new DataAdmix$Entry(admix, blend, supply);
@@ -123,17 +129,25 @@ export class DataAdmix$Entry<out T, in TOptions extends unknown[], in out TMix e
 
 }
 
-class SingleAdmix$Blend<out T, in TOptions extends unknown[], out TMix extends DataMix>
+class SingleAdmix$Blend<T, TOptions extends unknown[], TMix extends DataMix>
   implements DataAdmix.Blend<T, TOptions, TMix> {
 
+  readonly #infuse: DataInfusion<T, TOptions>;
   readonly #admix: SingleAdmix<T, TOptions, TMix>;
+  readonly #supply: Supply;
 
-  constructor(admix: SingleAdmix<T, TOptions, TMix>) {
+  constructor(
+    infuse: DataInfusion<T, TOptions>,
+    admix: SingleAdmix<T, TOptions, TMix>,
+    supply: Supply,
+  ) {
+    this.#infuse = infuse;
     this.#admix = admix;
+    this.#supply = supply;
   }
 
   pour(mix: TMix): IntakeFaucet<T> {
-    return this.#admix.pour(mix);
+    return this.#admix.pour({ infuse: this.#infuse, mix, supply: this.#supply });
   }
 
 }

@@ -14,11 +14,11 @@ describe('DataMixer', () => {
 
   describe('add', () => {
     it('replaces previous admix', async () => {
-      const handle1 = mixer.add(admix(withTestData, 1));
+      const handle1 = mixer.add(withTestData, admix(1));
 
       expect(handle1.supply.isOff).toBeNull();
 
-      const handle2 = mixer.add(admix(withTestData, 2));
+      const handle2 = mixer.add(withTestData, admix(2));
 
       expect(handle1.supply.isOff?.failed).toBe(false);
       expect(handle2.supply.isOff).toBeNull();
@@ -34,10 +34,9 @@ describe('DataMixer', () => {
       expect(sank).toBe(2);
     });
     it('does not add completed admix', async () => {
-      mixer.add(admix(withTestData, 1));
+      mixer.add(withTestData, admix(1));
 
-      const handle = mixer.add({
-        infuse: withTestData,
+      const handle = mixer.add(withTestData, {
         supply: neverSupply(),
         pour: () => withTestData(13),
       });

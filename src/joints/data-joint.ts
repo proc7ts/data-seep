@@ -160,7 +160,7 @@ export namespace DataJoint {
    */
   export interface Addition {
     /**
-     * Waits for the value to be {@link DataJoint#accept accepted}.
+     * Waits for the value to be {@link DataJoint#acceptValue accepted}.
      *
      * When absent, the data value accepted immediately.
      */

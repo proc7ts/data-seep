@@ -8,7 +8,7 @@ describe('admix', () => {
   it('creates faucet with the given options', async () => {
     const mixer = new DataMixer();
 
-    mixer.add(admix(withTestData, 12, 34));
+    mixer.add(withTestData, admix(12, 34));
 
     let sank: number | undefined;
 

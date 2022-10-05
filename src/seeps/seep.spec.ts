@@ -1,5 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
-import { DataFaucet } from '../data-faucet.js';
+import { Supply } from '@proc7ts/supply';
+import { DataFaucet, IntakeFaucet } from '../data-faucet.js';
 import { withValue } from '../infusions/with-value.js';
 import { seep } from './seep.js';
 
@@ -26,24 +27,24 @@ describe('seep', () => {
     expect(sank).toBe('test.1.2.3');
   });
 
-  function testSeep1(faucet: DataFaucet<string>): DataFaucet<string> {
-    return async (sink, sinkSupply) => {
+  function testSeep1(faucet: IntakeFaucet<string>): DataFaucet<string> {
+    return async (sink, sinkSupply = new Supply()) => {
       await faucet(async value => {
         await sink(value + '.1');
       }, sinkSupply);
     };
   }
 
-  function testSeep2(faucet: DataFaucet<string>): DataFaucet<string> {
-    return async (sink, sinkSupply) => {
+  function testSeep2(faucet: IntakeFaucet<string>): DataFaucet<string> {
+    return async (sink, sinkSupply = new Supply()) => {
       await faucet(async value => {
         await sink(value + '.2');
       }, sinkSupply);
     };
   }
 
-  function testSeep3(faucet: DataFaucet<string>): DataFaucet<string> {
-    return async (sink, sinkSupply) => {
+  function testSeep3(faucet: IntakeFaucet<string>): DataFaucet<string> {
+    return async (sink, sinkSupply = new Supply()) => {
       await faucet(async value => {
         await sink(value + '.3');
       }, sinkSupply);

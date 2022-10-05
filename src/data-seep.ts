@@ -1,4 +1,4 @@
-import { DataFaucet } from './data-faucet.js';
+import { DataFaucet, IntakeFaucet } from './data-faucet.js';
 
 /**
  * Data seep is a function that constructs data faucet that pours data converted from `input` faucet.
@@ -8,5 +8,5 @@ import { DataFaucet } from './data-faucet.js';
  */
 export type DataSeep<in TIn, out TOut = TIn> = (
   this: void,
-  input: DataFaucet<TIn>,
+  input: IntakeFaucet<TIn>,
 ) => DataFaucet<TOut>;

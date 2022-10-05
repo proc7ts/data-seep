@@ -2,6 +2,8 @@ import { Supply } from '@proc7ts/supply';
 import { DataAdmix } from './data-admix.js';
 import { DataMix } from './data-mix.js';
 import { DataMixer } from './data-mixer.js';
+import { SingleAdmix$Blend } from './impl/single-admix.blend.js';
+import { SingleAdmix } from './single.admix.js';
 
 /**
  * Blended data admixture (ingredient) of {@link DataMix data mix}.
@@ -49,4 +51,36 @@ export interface BlendedAdmix<
   replace?(
     context: DataAdmix.ReplacementContext<T, TOptions, TMix>,
   ): DataAdmix.Blend<T, TOptions, TMix>;
+}
+
+/**
+ * Converts arbitrary data admix to blended one.
+ *
+ * @param admix - Original data admix.
+ *
+ * @returns Either original `admix` if it is blended already, or new blended admix converted from original one.
+ */
+export function BlendedAdmix<T, TOptions extends unknown[], TMix extends DataMix = DataMix>(
+  admix: DataAdmix<T, TOptions, TMix>,
+): BlendedAdmix<T, TOptions, TMix> {
+  return admix.blend ? admix : new BlendedAdmix$BySingle(admix);
+}
+
+class BlendedAdmix$BySingle<T, TOptions extends unknown[], TMix extends DataMix>
+  implements BlendedAdmix<T, TOptions, TMix> {
+
+  readonly #admix: SingleAdmix<T, TOptions, TMix>;
+
+  constructor(admix: SingleAdmix<T, TOptions, TMix>) {
+    this.#admix = admix;
+  }
+
+  get supply(): Supply | undefined {
+    return this.#admix.supply;
+  }
+
+  blend(context: DataAdmix.AdditionContext<T, TOptions, TMix>): DataAdmix.Blend<T, TOptions, TMix> {
+    return new SingleAdmix$Blend(context.infuse, this.#admix, new Supply());
+  }
+
 }

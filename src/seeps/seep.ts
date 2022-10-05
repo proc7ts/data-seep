@@ -42,5 +42,5 @@ export function seep<TIn, T1, T2, T3, T4, T5, T6, TOut>(
 ): DataSeep<TIn, TOut>;
 
 export function seep(...seeps: DataSeep<unknown>[]): DataSeep<unknown> {
-  return seeps.reduce((prev, seep) => (prev ? faucet => prev(seep(faucet)) : seep));
+  return seeps.reduce((prev, seep) => faucet => seep(prev(faucet)));
 }

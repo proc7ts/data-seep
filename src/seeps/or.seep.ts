@@ -3,8 +3,7 @@ import { DataFaucet, IntakeFaucet } from '../data-faucet.js';
 import { DataSeep } from '../data-seep.js';
 
 /**
- * Creates data seep that pours data originated from input faucet when it becomes available. Until then it pours the
- * data originated from default faucet.
+ * Creates data seep that pours input data when it becomes available. Until then it pours the data by default faucet.
  *
  * @typeParam T - Poured data type.
  * @param withDefault - Default data faucet.

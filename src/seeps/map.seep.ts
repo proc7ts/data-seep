@@ -2,11 +2,11 @@ import { Supply } from '@proc7ts/supply';
 import { DataSeep } from '../data-seep.js';
 
 /**
- * Creates data seep that converts data values originated from input faucet by the given `converter`.
+ * Creates data seep that pource values converted from input ones by the given `converter`.
  *
  * @typeParam TIn - Input data type.
  * @typeParam TOut - Output (converted) data type.
- * @param convert - Data values converter function.
+ * @param convert - Input value converter function.
  *
  * @returns New data seep.
  */

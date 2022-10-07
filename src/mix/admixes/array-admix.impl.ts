@@ -3,7 +3,7 @@ import { DataFaucet, IntakeFaucet } from '../../data-faucet.js';
 import { withAll } from '../../infusions/with-all.js';
 import { withValue } from '../../infusions/with-value.js';
 import { ValueJoint } from '../../joints/value-joint.js';
-import { orSeep } from '../../seeps/or-seep.js';
+import { orSeep } from '../../seeps/or.seep.js';
 import { BlendedAdmix } from '../blended.admix.js';
 import { DataAdmix } from '../data-admix.js';
 import { DataMix } from '../data-mix.js';

@@ -2,7 +2,7 @@ import { describe, expect, it } from '@jest/globals';
 import { PromiseResolver } from '@proc7ts/async';
 import { Supply } from '@proc7ts/supply';
 import { withValue } from '../infusions/with-value.js';
-import { orSeep } from './or-seep.js';
+import { orSeep } from './or.seep.js';
 import { seep } from './seep.js';
 
 describe('orSeep', () => {

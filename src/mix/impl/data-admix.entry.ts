@@ -65,6 +65,10 @@ export class DataAdmix$Entry<T, TOptions extends unknown[], TMix extends DataMix
     this.#supply = supply;
   }
 
+  get supply(): Supply {
+    return this.#supply;
+  }
+
   get admix(): DataAdmix<T, TOptions, TMix> {
     return this.#admix;
   }
@@ -101,17 +105,17 @@ export class DataAdmix$Entry<T, TOptions extends unknown[], TMix extends DataMix
         replaced: {
           admix: this.admix,
           blend: this.blend,
-          supply: this.#supply,
+          supply: this.supply,
         },
       });
     } else if (this.blend.extend) {
       blend = this.blend.extend(admix);
 
-      if (supply.isOff && this.#supply.isOff) {
+      if (supply.isOff && this.supply.isOff) {
         return;
       }
     } else {
-      this.#supply.done();
+      this.supply.done();
 
       if (supply.isOff) {
         return;

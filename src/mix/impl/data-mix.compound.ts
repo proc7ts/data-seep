@@ -21,13 +21,13 @@ export class DataMix$Compound<TMix extends DataMix> implements DataMixCompound {
   watch<T, TOptions extends unknown[]>(
     infuse: DataInfusion<T, TOptions>,
   ): DataFaucet<DataAdmix.Update<T, TOptions>> {
-    const admixJoint = this.#admixes.joint(infuse);
+    const entryJoint = this.#admixes.joint(infuse);
 
-    return async (sink, sinkSupply) => await admixJoint.faucet(async admix => {
-        if (admix.pour) {
-          await sink({ infuse, supply: admix.supply, faucet: admix.pour(this.#mix) });
+    return async (sink, sinkSupply) => await entryJoint.faucet(async entry => {
+        if (entry.pour) {
+          await sink({ infuse, supply: entry.supply, faucet: entry.pour(this.#mix) });
         } else {
-          await sink({ infuse, supply: admix.supply });
+          await sink({ infuse, supply: entry.supply });
         }
       }, sinkSupply);
   }

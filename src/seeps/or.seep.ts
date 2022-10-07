@@ -2,6 +2,15 @@ import { Supply } from '@proc7ts/supply';
 import { DataFaucet, IntakeFaucet } from '../data-faucet.js';
 import { DataSeep } from '../data-seep.js';
 
+/**
+ * Creates data seep that pours data originated from input faucet when it becomes available. Until then it pours the
+ * data originated from default faucet.
+ *
+ * @typeParam T - Poured data type.
+ * @param withDefault - Default data faucet.
+ *
+ * @returns New data seep.
+ */
 export function orSeep<T>(withDefault: DataFaucet<T>): DataSeep<T> {
   return (faucet: IntakeFaucet<T>) => async (sink, sinkSupply = new Supply()) => {
       let sinkDefault = async (value: T): Promise<void> => {

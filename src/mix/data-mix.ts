@@ -36,7 +36,7 @@ export abstract class DataMix {
 
     return async (sink, sinkSupply = new Supply()) => await admixFaucet(async ({ faucet }) => {
         await faucet?.(sink, sinkSupply);
-      });
+      }, sinkSupply);
   }
 
   /**

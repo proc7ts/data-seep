@@ -3,7 +3,9 @@ import { DataFaucet, IntakeFaucet } from '../../data-faucet.js';
 import { withAll } from '../../infusions/with-all.js';
 import { withValue } from '../../infusions/with-value.js';
 import { ValueJoint } from '../../joints/value-joint.js';
+import { mapSeep } from '../../seeps/map.seep.js';
 import { orSeep } from '../../seeps/or.seep.js';
+import { switchSeep } from '../../seeps/switch.seep.js';
 import { BlendedAdmix } from '../blended.admix.js';
 import { DataAdmix } from '../data-admix.js';
 import { DataMix } from '../data-mix.js';
@@ -75,26 +77,24 @@ class ArrayAdmix$Blend<
   }
 
   pour(mix: TMix): IntakeFaucet<T[]> {
-    return async (sink, sinkSupply) => {
-      await this.#blends.faucet(async blends => {
-        let numBlends = 0;
-        const faucets: Record<number, IntakeFaucet<T[]>> = {};
+    return switchSeep((blends: Map<Supply, DataAdmix.Blend<T[], TOptions, TMix>>) => {
+      let numBlends = 0;
+      const faucets: Record<number, IntakeFaucet<T[]>> = {};
 
-        for (const blend of blends.values()) {
-          faucets[numBlends++] = orEmptyArray(blend.pour(mix));
+      for (const blend of blends.values()) {
+        faucets[numBlends++] = orEmptyArray(blend.pour(mix));
+      }
+
+      return mapSeep((arrays: Record<number, T[]>) => {
+        const array: T[] = [];
+
+        for (let i = 0; i < numBlends; ++i) {
+          array.push(...arrays[i]);
         }
 
-        await withAll(faucets)(async (arrays: Record<number, T[]>) => {
-          const array: T[] = [];
-
-          for (let i = 0; i < numBlends; ++i) {
-            array.push(...arrays[i]);
-          }
-
-          await sink(array);
-        }, sinkSupply);
-      }, sinkSupply);
-    };
+        return array;
+      })(withAll(faucets));
+    })(this.#blends.faucet);
   }
 
   extend(admix: DataAdmix<T[], TOptions, TMix>): this {

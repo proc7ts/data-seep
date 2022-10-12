@@ -1,7 +1,8 @@
-import { Supply } from '@proc7ts/supply';
 import { DataFaucet } from '../data-faucet.js';
 import { DataInfusion } from '../data-infusion.js';
 import { withAll, WithAll } from '../infusions/with-all.js';
+import { withNone } from '../infusions/with-none.js';
+import { switchSeep } from '../seeps/switch.seep.js';
 import { DataAdmix } from './data-admix.js';
 
 /**
@@ -32,11 +33,9 @@ export abstract class DataMix {
    * @returns Infused data faucet.
    */
   pour<T, TOptions extends unknown[]>(infusion: DataInfusion<T, TOptions>): DataFaucet<T> {
-    const admixFaucet = this.watch(infusion);
-
-    return async (sink, sinkSupply = new Supply()) => await admixFaucet(async ({ faucet }) => {
-        await faucet?.(sink, sinkSupply);
-      }, sinkSupply);
+    return switchSeep(({ faucet = withNone() }: DataAdmix.Update<T, TOptions>) => faucet)(
+      this.watch(infusion),
+    );
   }
 
   /**

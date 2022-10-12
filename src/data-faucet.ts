@@ -15,7 +15,11 @@ import { DataSink } from './data-sink.js';
  *
  * @returns Promise resolved when all data poured and sank.
  */
-export type DataFaucet<out T> = (sink: DataSink<T>, sinkSupply?: SupplyOut) => Promise<void>;
+export type DataFaucet<out T> = (
+  this: void,
+  sink: DataSink<T>,
+  sinkSupply?: SupplyOut,
+) => Promise<void>;
 
 /**
  * Intake {@link DataFaucet data facet} that always receives a sink supply.
@@ -26,7 +30,11 @@ export type DataFaucet<out T> = (sink: DataSink<T>, sinkSupply?: SupplyOut) => P
  *
  * @returns Promise resolved when all data poured and sank.
  */
-export type IntakeFaucet<out T> = (sink: DataSink<T>, sinkSupply: SupplyOut) => Promise<void>;
+export type IntakeFaucet<out T> = (
+  this: void,
+  sink: DataSink<T>,
+  sinkSupply: SupplyOut,
+) => Promise<void>;
 
 export namespace DataFaucet {
   /**

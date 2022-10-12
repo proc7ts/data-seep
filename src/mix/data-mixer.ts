@@ -4,7 +4,6 @@ import { DataInfusion } from '../data-infusion.js';
 import { DataSink } from '../data-sink.js';
 import { withValue } from '../infusions/with-value.js';
 import { DataAdmix } from './data-admix.js';
-import { DataMixCompound, DataMixCompounder } from './data-mix-compound.js';
 import { DataMix } from './data-mix.js';
 import { DefaultDataMix } from './default-data-mix.js';
 import { DataAdmix$Entry } from './impl/data-admix.entry.js';
@@ -20,7 +19,7 @@ import { DataMixer$Admixes } from './impl/data-mixer.admixes.js';
  */
 export class DataMixer<in out TMix extends DataMix = DataMix> {
 
-  readonly #compounder: DataMixCompounder<TMix>;
+  readonly #compounder: DataMix.Compounder<TMix>;
   readonly #admixes = new DataMixer$Admixes<TMix>();
 
   /**
@@ -31,11 +30,11 @@ export class DataMixer<in out TMix extends DataMix = DataMix> {
    */
   constructor(
     ...init: DataMix extends TMix
-      ? [compounder?: DataMixCompounder<TMix>]
-      : [compounder: DataMixCompounder<TMix>]
+      ? [compounder?: DataMix.Compounder<TMix>]
+      : [compounder: DataMix.Compounder<TMix>]
   );
 
-  constructor(compounder: DataMixCompounder<TMix> = DataMix$createDefault) {
+  constructor(compounder: DataMix.Compounder<TMix> = DataMix$createDefault) {
     this.#compounder = compounder;
   }
 
@@ -99,9 +98,9 @@ export class DataMixer<in out TMix extends DataMix = DataMix> {
 }
 
 function DataMix$createDefault<TMix extends DataMix>(
-  createCompound: (mix: TMix) => DataMixCompound,
+  createCompound: (mix: TMix) => DataMix.Compound,
 ): DataFaucet<TMix> {
   return withValue(
-    new DefaultDataMix(createCompound as (mix: DataMix) => DataMixCompound) as DataMix as TMix,
+    new DefaultDataMix(createCompound as (mix: DataMix) => DataMix.Compound) as DataMix as TMix,
   );
 }

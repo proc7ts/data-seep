@@ -1,4 +1,5 @@
 import { describe, expect, it } from '@jest/globals';
+import { Supply } from '@proc7ts/supply';
 import { DataFaucet } from '../../data-faucet.js';
 import { withValue } from '../../infusions/with-value.js';
 import { DataMixer } from '../data-mixer.js';
@@ -10,12 +11,14 @@ describe('admix', () => {
 
     mixer.add(withTestData, admix(12, 34));
 
+    const supply = new Supply();
     let sank: number | undefined;
 
     await mixer.mix(async mix => {
       await mix.pour(withTestData)(value => {
         sank = value;
-      });
+        supply.done();
+      }, supply);
     });
 
     expect(sank).toBe(46);

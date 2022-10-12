@@ -3,6 +3,7 @@ import { noop } from '@proc7ts/primitives';
 import { Supply, SupplyOut } from '@proc7ts/supply';
 import { DataFaucet } from '../data-faucet.js';
 import { DataSink } from '../data-sink.js';
+import { sinkAll } from '../sink-all.js';
 
 /**
  * Data joint connects {@link DataSink data sink} with {@link DataFaucet data faucet}.
@@ -24,7 +25,14 @@ export class DataJoint<out T, in TIn extends T = T> {
    */
   constructor() {
     this.#sink = this.#pour.bind(this);
-    this.#faucet = this.#addSink.bind(this);
+
+    const faucet = this.#addSink.bind(this);
+
+    this.#faucet = async (sink, sinkSupply) => await sinkAll(
+        faucet,
+        sink,
+        sinkSupply ? sinkSupply.derive().needs(this.supply) : this.supply,
+      );
   }
 
   async #pour(value: TIn): Promise<void> {
@@ -33,23 +41,26 @@ export class DataJoint<out T, in TIn extends T = T> {
     await Promise.all([whenAccepted?.(), whenSank()]);
   }
 
-  async #addSink(sink: DataSink<T>, sinkSupply?: SupplyOut): Promise<void> {
+  async #addSink(sink: DataSink<T>, sinkSupply: SupplyOut): Promise<void> {
     const supply = new Supply();
 
     supply
       .whenOff(() => {
         this.#sinks.delete(supply);
       })
-      .needs(this.supply);
-
-    sinkSupply?.alsoOff(supply);
+      .needs(sinkSupply);
 
     if (supply.isOff) {
       return await supply.whenDone();
     }
 
     this.#sinks.set(supply, sink);
-    await this.sinkAdded(sink, supply);
+    await Promise.all([
+      (async () => {
+        await this.sinkAdded(sink, supply);
+      })(),
+      supply.whenDone(),
+    ]);
   }
 
   /**
@@ -114,7 +125,16 @@ export class DataJoint<out T, in TIn extends T = T> {
 
   #pourValue(value: TIn): () => Promise<void> {
     const valueSank = new PromiseResolver();
-    const whenSank = Promise.all([...this.#sinks.values()].map(async sink => await sink(value)));
+    const whenSank = Promise.all(
+      [...this.#sinks.entries()].map(async ([supply, sink]) => {
+        try {
+          await sink(value);
+        } catch (error) {
+          supply.fail(error);
+          throw error;
+        }
+      }),
+    );
 
     valueSank.resolve(whenSank.then(noop));
 

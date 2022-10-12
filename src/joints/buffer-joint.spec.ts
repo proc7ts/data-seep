@@ -69,11 +69,14 @@ describe('BufferJoint', () => {
       const joint = new BufferJoint<number>();
       const sank: number[] = [];
 
-      await joint.faucet(value => {
+      const whenSank = joint.faucet(value => {
         sank.push(value);
       });
 
       expect(sank).toHaveLength(0);
+
+      joint.supply.done();
+      await whenSank;
     });
     it('pours all buffered values', async () => {
       const joint = new BufferJoint<number>(Infinity);
@@ -81,13 +84,16 @@ describe('BufferJoint', () => {
       const promise = Promise.all([joint.sink(1), joint.sink(2), joint.sink(3)]);
 
       await new Promise<void>(resolve => setTimeout(resolve));
-      await joint.faucet(value => {
+
+      const whenSank = joint.faucet(value => {
         sank.push(value);
       });
 
       expect(sank).toEqual([1, 2, 3]);
+
       joint.supply.done();
       await promise;
+      await whenSank;
     });
     it('pours only latest values', async () => {
       const joint = new BufferJoint<number>(3);
@@ -102,7 +108,8 @@ describe('BufferJoint', () => {
       ]);
 
       await new Promise<void>(resolve => setTimeout(resolve));
-      await joint.faucet(value => {
+
+      const whenSank = joint.faucet(value => {
         sank.push(value);
       });
 
@@ -117,6 +124,7 @@ describe('BufferJoint', () => {
       joint.supply.done();
       await promise;
       await promise2;
+      await whenSank;
     });
   });
 
@@ -151,7 +159,8 @@ describe('BufferJoint', () => {
         ]);
 
         await new Promise<void>(resolve => setTimeout(resolve));
-        await joint.faucet(value => {
+
+        const whenSank = joint.faucet(value => {
           sank.push(value);
         });
 
@@ -166,6 +175,7 @@ describe('BufferJoint', () => {
         joint.supply.done();
         await promise;
         await promise2;
+        await whenSank;
       });
     });
   });
@@ -202,24 +212,30 @@ describe('BufferJoint', () => {
       it('pours nothing initially', async () => {
         const sank: number[] = [];
 
-        await joint.faucet(value => {
+        const whenSank = joint.faucet(value => {
           sank.push(value);
         });
 
         expect(sank).toHaveLength(0);
+
+        joint.supply.done();
+        await whenSank;
       });
       it('pours all values', async () => {
         const sank: number[] = [];
         const promise = Promise.all([joint.sink(1), joint.sink(2), joint.sink(3)]);
 
         await new Promise<void>(resolve => setTimeout(resolve));
-        await joint.faucet(value => {
+
+        const whenSank = joint.faucet(value => {
           sank.push(value);
         });
 
         expect(sank).toEqual([1, 2, 3]);
+
         joint.supply.done();
         await promise;
+        await whenSank;
       });
     });
   });
@@ -258,24 +274,30 @@ describe('BufferJoint', () => {
       it('pours nothing initially', async () => {
         const sank: number[] = [];
 
-        await joint.faucet(value => {
+        const whenSank = joint.faucet(value => {
           sank.push(value);
         });
 
         expect(sank).toHaveLength(0);
+
+        joint.supply.done();
+        await whenSank;
       });
       it('pours latest buffered value', async () => {
         const sank: number[] = [];
         const promise = Promise.all([joint.sink(1), joint.sink(2), joint.sink(3)]);
 
         await new Promise<void>(resolve => setTimeout(resolve));
-        await joint.faucet(value => {
+
+        const whenSank = joint.faucet(value => {
           sank.push(value);
         });
 
         expect(sank).toEqual([3]);
+
         joint.supply.done();
         await promise;
+        await whenSank;
       });
       it('pours only latest value', async () => {
         const sank: number[] = [];
@@ -289,7 +311,8 @@ describe('BufferJoint', () => {
         ]);
 
         await new Promise<void>(resolve => setTimeout(resolve));
-        await joint.faucet(value => {
+
+        const whenSank = joint.faucet(value => {
           sank.push(value);
         });
 
@@ -304,6 +327,7 @@ describe('BufferJoint', () => {
         joint.supply.done();
         await promise;
         await promise2;
+        await whenSank;
       });
     });
   });

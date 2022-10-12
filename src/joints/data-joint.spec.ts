@@ -10,8 +10,7 @@ describe('DataJoint', () => {
     it('pours values to joint faucet', async () => {
       const joint = new DataJoint<number>();
       const sank: number[] = [];
-
-      await joint.faucet(value => {
+      const whenSank = joint.faucet(value => {
         sank.push(value);
       });
 
@@ -22,16 +21,17 @@ describe('DataJoint', () => {
 
       joint.supply.done();
       await promise;
+      await whenSank;
     });
     it('stops pouring values to removed sink', async () => {
       const joint = new DataJoint<number>();
       const sank: number[] = [];
       const sinkSupply = new Supply();
 
-      await joint.faucet(value => {
+      const whenSank1 = joint.faucet(value => {
         sank.push(value);
       });
-      await joint.faucet(value => {
+      const whenSank2 = joint.faucet(value => {
         sank.push(-value);
       }, sinkSupply);
 
@@ -54,11 +54,13 @@ describe('DataJoint', () => {
         })(),
       ]);
 
+      await whenSank2;
       await new Promise<void>(resolve => setTimeout(resolve));
       expect(sank).toEqual([1, -1, 2, 3]);
 
       joint.supply.done();
       await promise;
+      await whenSank1;
     });
   });
 
@@ -81,9 +83,10 @@ describe('DataJoint', () => {
       const joint = new TestJoint();
       const sank: number[] = [];
 
-      await joint.faucet(value => {
+      const whenSank = joint.faucet(value => {
         sank.push(value);
       });
+
       await expect(
         joint.faucet(value => {
           sank.push(-value);
@@ -95,6 +98,8 @@ describe('DataJoint', () => {
       await joint.sink(3);
 
       expect(sank).toEqual([1, -1, 2, -2, 3, -3]);
+      joint.supply.off();
+      await whenSank;
     });
     it('ignores removed sinks', async () => {
       const error = new Error('Rejected!');
@@ -114,18 +119,24 @@ describe('DataJoint', () => {
       const joint = new TestJoint();
       const sank: number[] = [];
 
-      await joint.faucet(value => {
+      const whenSank1 = joint.faucet(value => {
         sank.push(value);
       });
-      await joint.faucet(value => {
-        sank.push(-value);
-      });
+
+      await expect(
+        joint.faucet(value => {
+          sank.push(-value);
+        }),
+      ).rejects.toThrow(error);
 
       await joint.sink(1);
       await joint.sink(2);
       await joint.sink(3);
 
       expect(sank).toEqual([1, 2, 3]);
+
+      joint.supply.off();
+      await whenSank1;
     });
   });
 
@@ -134,7 +145,7 @@ describe('DataJoint', () => {
       const joint = new DataJoint<number>();
       const sank: number[] = [];
 
-      await joint.faucet(value => {
+      const whenSank = joint.faucet(value => {
         sank.push(value);
       });
 
@@ -142,6 +153,7 @@ describe('DataJoint', () => {
       await joint.sink(2);
       joint.supply.done();
       await joint.sink(3);
+      await whenSank;
 
       expect(sank).toEqual([1, 2]);
     });
@@ -159,12 +171,13 @@ describe('DataJoint', () => {
       const error = new Error('Test!');
       const sank: number[] = [];
 
-      await joint.faucet(value => {
+      const whenSank = joint.faucet(value => {
         sank.push(value);
       });
 
       joint.supply.whenOff(noop);
       joint.supply.off(error);
+      await expect(whenSank).rejects.toThrow(error);
 
       await expect(joint.sink(1)).rejects.toThrow(error);
       await expect(joint.sink(2)).rejects.toThrow(error);

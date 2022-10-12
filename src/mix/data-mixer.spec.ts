@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from '@jest/globals';
-import { neverSupply } from '@proc7ts/supply';
+import { neverSupply, Supply } from '@proc7ts/supply';
 import { DataFaucet } from '../data-faucet.js';
 import { withValue } from '../infusions/with-value.js';
 import { admix } from './admixes/mod.js';
@@ -23,12 +23,14 @@ describe('DataMixer', () => {
       expect(handle1.supply.isOff?.failed).toBe(false);
       expect(handle2.supply.isOff).toBeNull();
 
+      const supply = new Supply();
       let sank: number | undefined;
 
       await mixer.mix(async mix => {
         await mix.pour(withTestData)(value => {
           sank = value;
-        });
+          supply.done();
+        }, supply);
       });
 
       expect(sank).toBe(2);
@@ -41,13 +43,18 @@ describe('DataMixer', () => {
         pour: () => withTestData(13),
       });
 
+      const supply = new Supply();
       let sank: number | undefined;
 
-      await mixer.mix(async mix => {
+      const whenSank = mixer.mix(async mix => {
         await mix.pour(withTestData)(value => {
           sank = value;
-        });
+        }, supply);
       });
+
+      await new Promise(resolve => setImmediate(resolve));
+      supply.done();
+      await whenSank;
       await handle.whenSank();
 
       expect(sank).toBeUndefined();

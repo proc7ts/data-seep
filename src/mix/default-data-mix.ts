@@ -1,4 +1,3 @@
-import { Supply } from '@proc7ts/supply';
 import { DataFaucet } from '../data-faucet.js';
 import { DataInfusion } from '../data-infusion.js';
 import { DataAdmix } from './data-admix.js';
@@ -27,9 +26,7 @@ export class DefaultDataMix extends DataMix {
   override watch<T, TOptions extends unknown[]>(
     infusion: DataInfusion<T, TOptions>,
   ): DataFaucet<DataAdmix.Update<T, TOptions>> {
-    const admixFaucet = this.#compound.watch(infusion);
-
-    return async (sink, sinkSupply = new Supply()) => await admixFaucet(sink, sinkSupply);
+    return this.#compound.watch(infusion);
   }
 
 }

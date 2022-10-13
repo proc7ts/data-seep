@@ -2,7 +2,7 @@ import { DataAdmix } from '../data-admix.js';
 import { DataMix } from '../data-mix.js';
 import { ArrayAdmix } from './array-admix.impl.js';
 
-export function admixMany<
+export function admixArray<
   T,
   TOptions extends unknown[] = unknown[],
   TMix extends DataMix = DataMix,

@@ -45,7 +45,7 @@ export class DataMixer<in out TMix extends DataMix = DataMix> {
    *
    * @typeParam T - Infused data type. I.e. the type of data poured by created faucet.
    * @typeParam TOptions - Tuple type representing infusion options.
-   * @param infusion - The infusion of data pored by `admix`.
+   * @param infuse - The infusion of data pored by `admix`.
    * @param admix - Data admix to add.
    *
    * @returns Gandle of added admix.
@@ -69,16 +69,18 @@ export class DataMixer<in out TMix extends DataMix = DataMix> {
       };
     }
 
-    const { supply } = entry.blend;
+    const { supply } = entry;
     const { whenSank } = joint.add(entry);
 
     supply.whenOff(() => {
-      if (joint.value === entry) {
-        joint.add({ supply });
+      const replacement = entry.drop();
+
+      if (replacement) {
+        joint.add(replacement);
       }
     });
 
-    return { supply, whenSank };
+    return { supply: entry.supply, whenSank };
   }
 
   /**

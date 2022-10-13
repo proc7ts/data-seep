@@ -51,9 +51,11 @@ export class DataAdmix$Entry<T, TOptions extends unknown[], TMix extends DataMix
     return new SingleAdmix$Blend(infuse, admix, supply);
   }
 
-  readonly #admix: DataAdmix<T, TOptions, TMix>;
-  readonly #blend: DataAdmix.Blend<T, TOptions, TMix>;
-  readonly #supply: Supply;
+  #admix: DataAdmix<T, TOptions, TMix>;
+  #blend: DataAdmix.Blend<T, TOptions, TMix>;
+  #supply: Supply;
+  #prev: DataAdmix$Entry<T, TOptions, TMix> | undefined;
+  #next: DataAdmix$Entry<T, TOptions, TMix> | undefined;
 
   private constructor(
     admix: DataAdmix<T, TOptions, TMix>,
@@ -80,7 +82,7 @@ export class DataAdmix$Entry<T, TOptions extends unknown[], TMix extends DataMix
   pour(mix: TMix): IntakeFaucet<T> {
     const faucet = this.blend.pour(mix);
 
-    return (sink, sinkSupply) => faucet(sink, this.#supply.derive().needs(sinkSupply));
+    return async (sink, sinkSupply) => await faucet(sink, this.supply.derive().needs(sinkSupply));
   }
 
   extend(
@@ -124,7 +126,64 @@ export class DataAdmix$Entry<T, TOptions extends unknown[], TMix extends DataMix
       blend = DataAdmix$Entry.#createBlend(mixer, infuse, admix, supply);
     }
 
-    return new DataAdmix$Entry(admix, blend, supply);
+    return this.#replace(admix, blend, supply);
+  }
+
+  #replace(
+    admix: DataAdmix<T, TOptions, TMix>,
+    blend: DataAdmix.Blend<T, TOptions, TMix>,
+    supply: Supply,
+  ): DataAdmix$Entry<T, TOptions, TMix> {
+    const next = new DataAdmix$Entry<T, TOptions, TMix>(admix, blend, supply);
+
+    this.#blend = null!; // Unusable from now on.
+    this.#next = next;
+    next.#prev = this;
+
+    return next;
+  }
+
+  drop(): DataAdmix$Entry<T, TOptions, TMix> | DataAdmix$Removed | void {
+    const prev = this.#prev;
+    const next = this.#next;
+
+    if (!next) {
+      // Most recent entry.
+      if (!prev) {
+        // No more entries left.
+
+        return { supply: this.supply }; // Drop infusion entry.
+      }
+
+      // Pop previous admix.
+      this.#admix = prev.admix;
+      this.#supply = prev.supply;
+
+      // Remove previous entry, as it no longer needed.
+      prev.#remove();
+
+      return this; // Infusion entry remains the same, but with previous admix.
+    }
+
+    // Not a top-level entry.
+    // Just remove it from the list.
+    this.#remove();
+  }
+
+  #remove(): void {
+    const prev = this.#prev;
+    const next = this.#next;
+
+    if (next) {
+      next.#prev = prev;
+    }
+    if (prev) {
+      prev.#next = next;
+    }
+
+    this.#prev = this.#next = undefined;
+
+    return;
   }
 
 }

@@ -19,17 +19,18 @@ export class ArrayAdmix<
   in out TMix extends DataMix = DataMix,
 > implements BlendedAdmix<T[], TOptions, TMix> {
 
-  readonly #supply: Supply | undefined;
+  readonly #supply: Supply;
   readonly #admix: BlendedAdmix<T[], TOptions, TMix>;
 
   constructor(admix: DataAdmix<T[], TOptions, TMix>) {
-    const { supply = new Supply() } = admix;
+    this.#admix = BlendedAdmix(admix);
+
+    const { supply = new Supply() } = this.#admix;
 
     this.#supply = supply;
-    this.#admix = BlendedAdmix(admix);
   }
 
-  get supply(): Supply | undefined {
+  get supply(): Supply {
     return this.#supply;
   }
 
@@ -48,10 +49,12 @@ export class ArrayAdmix<
     const { blend } = replaced;
 
     if (blend instanceof ArrayAdmix$Blend) {
-      return blend.extend(this);
+      return blend.addAdmix(this.#admix, this.supply);
     }
 
-    return new ArrayAdmix$Blend(context, replaced.supply).addBlend(blend, replaced.supply);
+    return new ArrayAdmix$Blend(context)
+      .addBlend(blend, replaced.supply)
+      .addAdmix(this.#admix, this.supply);
   }
 
 }
@@ -98,14 +101,17 @@ class ArrayAdmix$Blend<
   }
 
   extend(admix: DataAdmix<T[], TOptions, TMix>): this {
-    if (admix.blend) {
-      const { supply = new Supply() } = admix;
-      const blend = admix.blend(this.#context);
+    admix = BlendedAdmix(admix);
 
-      this.addBlend(blend, supply);
-    }
+    const { supply = new Supply() } = admix;
 
-    return this;
+    return this.addAdmix(admix, supply);
+  }
+
+  addAdmix(admix: BlendedAdmix<T[], TOptions, TMix>, supply: Supply): this {
+    const blend = admix.blend(this.#context);
+
+    return this.addBlend(blend, supply);
   }
 
   addBlend(blend: DataAdmix.Blend<T[], TOptions, TMix>, supply: Supply): this {

@@ -25,7 +25,7 @@ export class DataMixer<in out TMix extends DataMix = DataMix> {
   /**
    * Constructs data mixer.
    *
-   * @param init - Initialization tuple containing mixed data compounder. The one puring {@link DefaultDataMix} will be
+   * @param init - Initialization tuple containing mixed data compounder. The one pouring {@link DefaultDataMix} will be
    * used when omitted.
    */
   constructor(

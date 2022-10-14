@@ -70,13 +70,13 @@ export class DataMixer<in out TMix extends DataMix = DataMix> {
     }
 
     const { supply } = entry;
-    const { whenSank } = joint.add(entry);
+    const { whenSank } = joint.pass(entry);
 
     supply.whenOff(() => {
       const replacement = entry.drop();
 
       if (replacement) {
-        joint.add(replacement);
+        joint.pass(replacement);
       }
     });
 

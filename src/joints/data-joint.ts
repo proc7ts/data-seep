@@ -36,7 +36,7 @@ export class DataJoint<out T, in TIn extends T = T> {
   }
 
   async #pour(value: TIn): Promise<void> {
-    const { whenAccepted, whenSank } = this.add(value);
+    const { whenAccepted, whenSank } = this.pass(value);
 
     await Promise.all([whenAccepted?.(), whenSank()]);
   }
@@ -88,13 +88,13 @@ export class DataJoint<out T, in TIn extends T = T> {
   }
 
   /**
-   * Adds the value to the this joint.
+   * Passes value through this joint.
    *
-   * @param value - Value to add.
+   * @param value - Value to pass.
    *
-   * @returns Value addition result.
+   * @returns State of value passage.
    */
-  add(value: TIn): DataJoint.Addition {
+  pass(value: TIn): DataJoint.Passage {
     const { supply } = this;
 
     if (supply.isOff) {
@@ -142,7 +142,7 @@ export class DataJoint<out T, in TIn extends T = T> {
   }
 
   /**
-   * Called when new data value {@link add added} to accept the new value.
+   * Called when new data value {@link pass added} to accept the new value.
    *
    * Does nothing by default.
    *
@@ -174,22 +174,24 @@ export class DataJoint<out T, in TIn extends T = T> {
 
 export namespace DataJoint {
   /**
-   * A result of value {@link DataJoint#add addition} to tdata joint.
+   * State of value {@link DataJoint#pass passage} through the joint.
    *
-   * Indicates the value has been added. May also be used to await for value acceptance.
+   * May be used to await for value acceptance.
    */
-  export interface Addition {
+  export interface Passage {
     /**
-     * Waits for the value to be {@link DataJoint#acceptValue accepted}.
+     * Waits for the passed value to be {@link DataJoint#acceptValue accepted}.
      *
-     * When absent, the data value accepted immediately.
+     * The absence means, the value accepted immediately.
+     *
+     * @returns Promise resolved when value accepted.
      */
     whenAccepted?(this: void): Promise<void>;
 
     /**
-     * Waits for the valuie to be sank by data sinks {@link DataJoint#sinkAdded added} to the joint.
+     * Waits for the passed value to be sank by data sinks {@link DataJoint#sinkAdded added} to the joint.
      *
-     * @returns Promise resolved when data sank.
+     * @returns Promise resolved when value sank.
      */
     whenSank(this: void): Promise<void>;
   }

@@ -121,7 +121,7 @@ class ArrayAdmix$Blend<
     const blends = this.#blends.value;
 
     blends.set(keySupply, blend);
-    this.#blends.add(blends);
+    this.#blends.pass(blends);
     keySupply.whenOff(() => this.#removeBlend(keySupply));
 
     return this;
@@ -132,7 +132,7 @@ class ArrayAdmix$Blend<
 
     blends.delete(keySupply);
 
-    this.#blends.add(blends);
+    this.#blends.pass(blends);
   }
 
 }

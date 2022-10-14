@@ -24,25 +24,25 @@ describe('mergeSeep', () => {
     const input1 = new BufferJoint<number>();
     const input2 = new BufferJoint<number>();
 
-    input1.add(1);
-    inputs.add(input1.faucet);
+    input1.pass(1);
+    inputs.pass(input1.faucet);
     await new Promise(resolve => setImmediate(resolve));
     expect(sank).toEqual([1]);
 
-    inputs.add(withNone());
+    inputs.pass(withNone());
     await new Promise(resolve => setImmediate(resolve));
     expect(sank).toEqual([1]);
 
-    input2.add(2);
-    inputs.add(input2.faucet);
+    input2.pass(2);
+    inputs.pass(input2.faucet);
     await new Promise(resolve => setImmediate(resolve));
     expect(sank).toEqual([1, 2]);
 
-    input2.add(22);
+    input2.pass(22);
     await new Promise(resolve => setImmediate(resolve));
     expect(sank).toEqual([1, 2, 22]);
 
-    input1.add(11);
+    input1.pass(11);
     await new Promise(resolve => setImmediate(resolve));
     expect(sank).toEqual([1, 2, 22, 11]);
 
@@ -81,22 +81,22 @@ describe('mergeSeep', () => {
     const input1 = new BufferJoint<number>();
     const input2 = new BufferJoint<number>();
 
-    input1.add(1);
-    inputs.add(input1.faucet);
+    input1.pass(1);
+    inputs.pass(input1.faucet);
     await new Promise(resolve => setImmediate(resolve));
     expect(sank).toEqual([1]);
 
-    input2.add(2);
-    inputs.add(input2.faucet);
+    input2.pass(2);
+    inputs.pass(input2.faucet);
     await new Promise(resolve => setImmediate(resolve));
     expect(sank).toEqual([1, 2]);
 
-    input2.add(22);
+    input2.pass(22);
     await expect(promise).rejects.toBe(error);
     await new Promise(resolve => setImmediate(resolve));
     expect(sank).toEqual([1, 2, 22]);
 
-    input1.add(11);
+    input1.pass(11);
 
     await new Promise(resolve => setImmediate(resolve));
     expect(sank).toEqual([1, 2, 22]);

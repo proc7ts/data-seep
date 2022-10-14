@@ -13,7 +13,7 @@ import { DataSeep } from '../data-seep.js';
  * @returns New data seep.
  */
 export function switchSeep<TIn, TOut = TIn>(
-  convert: (value: TIn) => IntakeFaucet<TOut> | PromiseLike<IntakeFaucet<TOut>>,
+  convert: (this: void, value: TIn) => IntakeFaucet<TOut>,
 ): DataSeep<TIn, TOut> {
   return input => async (sink, sinkSupply = new Supply()) => {
       let outSinkSupply: Supply | undefined;
@@ -22,7 +22,7 @@ export function switchSeep<TIn, TOut = TIn>(
         outSinkSupply?.done();
         outSinkSupply = sinkSupply.derive();
 
-        const withOutput = await convert(value);
+        const withOutput = convert(value);
 
         await withOutput(sink, outSinkSupply);
       }, sinkSupply);

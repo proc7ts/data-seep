@@ -17,7 +17,7 @@ import { DataSink } from '../data-sink.js';
  * @returns New data seep.
  */
 export function mergeSeep<TIn, TOut = TIn>(
-  convert: (value: TIn) => IntakeFaucet<TOut> | PromiseLike<IntakeFaucet<TOut>>,
+  convert: (this: void, value: TIn) => IntakeFaucet<TOut>,
 ): DataSeep<TIn, TOut> {
   return input => async (sink, sinkSupply = new Supply()) => {
       const outSinkSupply = new Supply();
@@ -26,25 +26,21 @@ export function mergeSeep<TIn, TOut = TIn>(
 
       sinkSupply.alsoOff(outSinkSupply);
 
-      const outDone = new PromiseResolver();
+      const { resolve, reject, whenDone } = new PromiseResolver();
       let numOuts = 0;
-      const addOut = (out: IntakeFaucet<TOut> | PromiseLike<IntakeFaucet<TOut>>): void => {
+      const addOut = (withOutput: IntakeFaucet<TOut>): void => {
         ++numOuts;
 
         Promise.resolve()
           .then(async () => {
-            const withOutput = await out;
-
             await withOutput(sink, outSinkSupply);
-          })
-          .then(() => {
             if (!--numOuts) {
-              outDone.resolve();
+              resolve();
             }
           })
           .catch(error => {
             outSinkSupply.fail(error);
-            outDone.reject(error);
+            reject(error);
           });
       };
 
@@ -53,7 +49,7 @@ export function mergeSeep<TIn, TOut = TIn>(
       }, outSinkSupply);
 
       if (numOuts) {
-        await outDone.whenDone();
+        await whenDone();
       }
     };
 }

@@ -11,9 +11,9 @@ import { DataSeep } from '../data-seep.js';
  * @returns New data seep.
  */
 export function mapSeep<TIn, TOut = TIn>(
-  convert: (input: TIn) => TOut | PromiseLike<TOut>,
+  convert: (this: void, input: TIn) => TOut,
 ): DataSeep<TIn, TOut> {
   return input => async (sink, sinkSupply = new Supply()) => {
-      await input(async value => await sink(await convert(value)), sinkSupply);
+      await input(async value => await sink(convert(value)), sinkSupply);
     };
 }

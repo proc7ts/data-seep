@@ -33,6 +33,8 @@ export function withAll<TIntakes extends WithAll.Intakes>(
     let activeSinkCount = 0;
     let prevValues: Partial<TSeep> = {};
     let values: Partial<TSeep> | null = null; // null while sinking!
+    let rev = 0;
+    let pouredRev = 0;
 
     const pourValues = async (): Promise<void> => {
       if (!missingIntakeCount) {
@@ -49,6 +51,13 @@ export function withAll<TIntakes extends WithAll.Intakes>(
 
         await whenIntakesReady;
       }
+
+      // Ensure values poured at most once.
+      if (pouredRev >= rev) {
+        return;
+      }
+
+      pouredRev = rev;
 
       // Prevent values from overriding while sinking them.
       let sankValues: TSeep;
@@ -123,6 +132,7 @@ export function withAll<TIntakes extends WithAll.Intakes>(
 
         prevIntakeValueSupply = intakeValueSupply;
 
+        ++rev;
         await pourValues();
         await intakeValueSupply.whenDone();
       };
@@ -132,6 +142,7 @@ export function withAll<TIntakes extends WithAll.Intakes>(
 
     if (!totalIntakeCount) {
       // No intakes. Pour once then finish.
+      ++rev;
       await pourValues();
       allValuesSupply.done();
     }

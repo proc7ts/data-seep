@@ -81,7 +81,7 @@ export class DataJoint<out T, in TIn extends T = T> {
   }
 
   /**
-   * Data foucet pouring data values sank to {@link sink joint sink}.
+   * Data faucet pouring data values sank to {@link sink joint sink}.
    */
   get faucet(): DataFaucet<T> {
     return this.#faucet;

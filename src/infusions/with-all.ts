@@ -21,7 +21,7 @@ export function withAll<TIntakes extends WithAll.Intakes>(
 ): DataFaucet<WithAll.SeepType<TIntakes>> {
   type TSeep = WithAll.SeepType<TIntakes>;
 
-  return async (sink, sinkSpply = new Supply()) => {
+  return async (sink, sinkSupply = new Supply()) => {
     const keys = Reflect.ownKeys(intakes);
 
     let totalIntakeCount = keys.length;
@@ -83,7 +83,7 @@ export function withAll<TIntakes extends WithAll.Intakes>(
         allValuesSupply.cutOff(reason);
       }
     })
-      .needs(sinkSpply)
+      .needs(sinkSupply)
       .needs(allValuesSupply);
 
     keys.forEach(<TKey extends keyof TIntakes>(key: TKey) => {

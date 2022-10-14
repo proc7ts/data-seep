@@ -22,7 +22,7 @@ export interface SingleAdmix<
    *
    * Once cut off, the admix will be removed from the mix and thus won't pour any data.
    *
-   * This supply will be returrned from {@link DataMixer#add} method. New one will be created otherwise.
+   * This supply will be returned from {@link DataMixer#add} method. New one will be created otherwise.
    */
   readonly supply?: Supply | undefined;
 

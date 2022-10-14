@@ -157,7 +157,7 @@ describe('DataJoint', () => {
 
       expect(sank).toEqual([1, 2]);
     });
-    it('prevents addind new sinks when cut off', async () => {
+    it('prevents adding new sinks when cut off', async () => {
       const joint = new DataJoint<number>();
       const error = new Error('Test!');
 

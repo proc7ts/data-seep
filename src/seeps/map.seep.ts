@@ -2,7 +2,7 @@ import { Supply } from '@proc7ts/supply';
 import { DataSeep } from '../data-seep.js';
 
 /**
- * Creates data seep that pource values converted from input ones by the given `converter`.
+ * Creates data seep that pours values converted from input ones by the given `converter`.
  *
  * @typeParam TIn - Input data type.
  * @typeParam TOut - Output (converted) data type.

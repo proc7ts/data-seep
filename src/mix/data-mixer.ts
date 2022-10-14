@@ -48,7 +48,7 @@ export class DataMixer<in out TMix extends DataMix = DataMix> {
    * @param infuse - The infusion of data pored by `admix`.
    * @param admix - Data admix to add.
    *
-   * @returns Gandle of added admix.
+   * @returns Handle of added admix.
    */
   add<T, TOptions extends unknown[]>(
     infuse: DataInfusion<T, TOptions>,
@@ -84,7 +84,7 @@ export class DataMixer<in out TMix extends DataMix = DataMix> {
   }
 
   /**
-   * Mixes infused data and purs the result data mix to the given `sink`.
+   * Mixes infused data and pours the result data mix to the given `sink`.
    *
    * @param sink - Target sink of data mix.
    * @param sinkSupply - Optional data mix `sink` supply. When cut off the mix should not be poured to target `sink`.

@@ -8,7 +8,7 @@ import { SingleAdmix } from './single.admix.js';
 /**
  * Blended data admixture (ingredient) of {@link DataMix data mix}.
  *
- * This implemetation is able to infuse data combined from multiple admixes.
+ * This implementation is able to infuse data combined from multiple admixes.
  *
  * @typeParam T - Infused data type.
  * @typeParam TOptions - Tuple type representing infusion options.
@@ -24,7 +24,7 @@ export interface BlendedAdmix<
    *
    * Once cut off, the admix will be removed from the mix and thus won't pour any data.
    *
-   * This supply will be returrned from {@link DataMixer#add} method. New one will be created otherwise.
+   * This supply will be returned from {@link DataMixer#add} method. New one will be created otherwise.
    */
   readonly supply?: Supply | undefined;
 
@@ -42,7 +42,7 @@ export interface BlendedAdmix<
   blend(context: DataAdmix.AdditionContext<T, TOptions, TMix>): DataAdmix.Blend<T, TOptions, TMix>;
 
   /**
-   * Replaces existing admix fior the same infusion.
+   * Replaces existing admix for the same infusion.
    *
    * @param context - Context of admix replacement.
    *

@@ -31,40 +31,46 @@ export class DataAdmix$Entry<T, TOptions extends unknown[], TMix extends DataMix
       return;
     }
 
-    return new DataAdmix$Entry(admix, supply, this.#createBlend(mixer, infuse, admix, supply));
+    return new DataAdmix$Entry(
+      admix,
+      supply,
+      this.#createBlendFactory(mixer, infuse, admix, supply),
+    );
   }
 
-  static #createBlend<T, TOptions extends unknown[], TMix extends DataMix>(
+  static #createBlendFactory<T, TOptions extends unknown[], TMix extends DataMix>(
     mixer: DataMixer<TMix>,
     infuse: DataInfusion<T, TOptions>,
     admix: DataAdmix<T, TOptions, TMix>,
-    supply: Supply,
-  ): DataAdmix.Blend<T, TOptions, TMix> {
+    admixSupply: Supply,
+  ): () => DataAdmix.Blend<T, TOptions, TMix> {
     if (admix.blend) {
-      return admix.blend({
-        mixer,
-        infuse,
-        supply,
-      });
+      return () => admix.blend({
+          mixer,
+          infuse,
+          supply: admixSupply,
+        });
     }
 
-    return new SingleAdmix$Blend(infuse, admix, supply);
+    return () => new SingleAdmix$Blend(infuse, admix, admixSupply);
   }
 
   #admix: DataAdmix<T, TOptions, TMix>;
-  #blend: DataAdmix.Blend<T, TOptions, TMix>;
   #admixSupply: Supply;
+  #blendFactory: () => DataAdmix.Blend<T, TOptions, TMix>;
+  #blend?: DataAdmix.Blend<T, TOptions, TMix>;
+
   #prev: DataAdmix$Entry<T, TOptions, TMix> | undefined;
   #next: DataAdmix$Entry<T, TOptions, TMix> | undefined;
 
   private constructor(
     admix: DataAdmix<T, TOptions, TMix>,
     admixSupply: Supply,
-    blend: DataAdmix.Blend<T, TOptions, TMix>,
+    blendFactory: () => DataAdmix.Blend<T, TOptions, TMix>,
   ) {
     this.#admix = admix;
-    this.#blend = blend;
     this.#admixSupply = admixSupply;
+    this.#blendFactory = blendFactory;
   }
 
   get admix(): DataAdmix<T, TOptions, TMix> {
@@ -76,13 +82,19 @@ export class DataAdmix$Entry<T, TOptions extends unknown[], TMix extends DataMix
   }
 
   get blend(): DataAdmix.Blend<T, TOptions, TMix> {
-    return this.#blend;
+    // Delay blend construction.
+    // This makes it possible to reuse existing blend, but modify it only after the entry replacement.
+    return (this.#blend ||= this.#blendFactory());
   }
 
   pour(mix: TMix): IntakeFaucet<T> {
     const faucet = this.blend.pour(mix);
 
-    return async (sink, sinkSupply) => await faucet(sink, this.admixSupply.derive().needs(sinkSupply));
+    return async (sink, sinkSupply) => {
+      await faucet(async value => {
+        await sink(value);
+      }, this.admixSupply.derive().needs(sinkSupply));
+    };
   }
 
   extend(
@@ -91,7 +103,8 @@ export class DataAdmix$Entry<T, TOptions extends unknown[], TMix extends DataMix
     admix: DataAdmix<T, TOptions, TMix>,
   ): DataAdmix$Entry<T, TOptions, TMix> | undefined {
     const { supply = new Supply() } = admix;
-    let blend: DataAdmix.Blend<T, TOptions, TMix>;
+    const { blend } = this;
+    let blendFactory: () => DataAdmix.Blend<T, TOptions, TMix>;
 
     if (admix.replace) {
       if (supply.isOff) {
@@ -100,22 +113,22 @@ export class DataAdmix$Entry<T, TOptions extends unknown[], TMix extends DataMix
         return;
       }
 
-      blend = admix.replace({
-        mixer,
-        infuse,
-        supply,
-        replaced: {
-          admix: this.admix,
-          blend: this.blend,
-          supply: this.admixSupply,
-        },
-      });
-    } else if (this.blend.extend) {
-      blend = this.blend.extend(admix);
-
+      blendFactory = () => admix.replace!({
+          mixer,
+          infuse,
+          supply,
+          replaced: {
+            admix: this.admix,
+            blend: blend,
+            supply: this.admixSupply,
+          },
+        });
+    } else if (blend.extend) {
       if (supply.isOff && this.admixSupply.isOff) {
         return;
       }
+
+      blendFactory = () => blend.extend!(admix);
     } else {
       this.admixSupply.done();
 
@@ -123,20 +136,19 @@ export class DataAdmix$Entry<T, TOptions extends unknown[], TMix extends DataMix
         return;
       }
 
-      blend = DataAdmix$Entry.#createBlend(mixer, infuse, admix, supply);
+      blendFactory = DataAdmix$Entry.#createBlendFactory(mixer, infuse, admix, supply);
     }
 
-    return this.#replace(admix, supply, blend);
+    return this.#replace(admix, supply, blendFactory);
   }
 
   #replace(
     admix: DataAdmix<T, TOptions, TMix>,
     admixSupply: Supply,
-    blend: DataAdmix.Blend<T, TOptions, TMix>,
+    blendFactory: () => DataAdmix.Blend<T, TOptions, TMix>,
   ): DataAdmix$Entry<T, TOptions, TMix> {
-    const next = new DataAdmix$Entry<T, TOptions, TMix>(admix, admixSupply, blend);
+    const next = new DataAdmix$Entry<T, TOptions, TMix>(admix, admixSupply, blendFactory);
 
-    this.#blend = null!; // Unusable from now on.
     this.#next = next;
     next.#prev = this;
 

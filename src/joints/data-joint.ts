@@ -55,12 +55,7 @@ export class DataJoint<out T, in TIn extends T = T> {
     }
 
     this.#sinks.set(supply, sink);
-    await Promise.all([
-      (async () => {
-        await this.sinkAdded(sink, supply);
-      })(),
-      supply.whenDone(),
-    ]);
+    await Promise.all([this.sinkAdded(sink, supply), supply.whenDone()]);
   }
 
   /**
@@ -116,15 +111,15 @@ export class DataJoint<out T, in TIn extends T = T> {
       return;
     }
 
-    const valueAccepted = new PromiseResolver();
+    const { resolve, whenDone } = new PromiseResolver();
 
-    valueAccepted.resolve(Promise.resolve(whenAccepted).then(noop));
+    resolve(whenAccepted);
 
-    return async () => await valueAccepted.whenDone();
+    return whenDone;
   }
 
   #pourValue(value: TIn): () => Promise<void> {
-    const valueSank = new PromiseResolver();
+    const { resolve, whenDone } = new PromiseResolver();
     const whenSank = Promise.all(
       [...this.#sinks.entries()].map(async ([supply, sink]) => {
         try {
@@ -136,9 +131,9 @@ export class DataJoint<out T, in TIn extends T = T> {
       }),
     );
 
-    valueSank.resolve(whenSank.then(noop));
+    resolve(whenSank.then(noop));
 
-    return valueSank.whenDone;
+    return whenDone;
   }
 
   /**
@@ -148,10 +143,9 @@ export class DataJoint<out T, in TIn extends T = T> {
    *
    * @param _value - Accepted data value.
    *
-   * @returns Ether nothing if the value accepted immediately, or a promise-like instance resolved when the value
-   * accepted.
+   * @returns Ether nothing if the value accepted immediately, or promise resolved when the value accepted.
    */
-  protected acceptValue(_value: TIn): void | PromiseLike<unknown> {
+  protected acceptValue(_value: TIn): void | Promise<void> {
     // Do nothing.
   }
 
@@ -164,9 +158,9 @@ export class DataJoint<out T, in TIn extends T = T> {
    * @param _sink - Added data sink.
    * @param _sinkSupply - Added data sink supply. When cut off the data won't be poured to target `sink`.
    *
-   * @returns Either nothing, or a promise-like instance resolved when the sink added.
+   * @returns Either nothing, or a promise resolved when the sink added.
    */
-  protected sinkAdded(_sink: DataSink<T>, _sinkSupply: Supply): void | PromiseLike<unknown> {
+  protected sinkAdded(_sink: DataSink<T>, _sinkSupply: Supply): void | PromiseLike<void> {
     // Do nothing.
   }
 

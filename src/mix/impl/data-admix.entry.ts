@@ -1,7 +1,6 @@
 import { Supply } from '@proc7ts/supply';
 import { IntakeFaucet } from '../../data-faucet.js';
 import { DataInfusion } from '../../data-infusion.js';
-import { DataSink } from '../../data-sink.js';
 import { DataAdmix } from '../data-admix.js';
 import { DataMix } from '../data-mix.js';
 import { DataMixer } from '../data-mixer.js';
@@ -83,11 +82,7 @@ export class DataAdmix$Entry<T, TOptions extends unknown[], TMix extends DataMix
   pour(mix: TMix): IntakeFaucet<T> {
     const faucet = this.blend.pour(mix);
 
-    return async (sink, sinkSupply) => {
-      const supply = this.admixSupply.derive().needs(sinkSupply);
-
-      return await faucet(DataSink(sink, supply), supply);
-    };
+    return async (sink, sinkSupply) => await faucet(sink, this.admixSupply.derive().needs(sinkSupply));
   }
 
   extend(

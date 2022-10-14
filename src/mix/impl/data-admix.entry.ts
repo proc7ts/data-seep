@@ -1,6 +1,7 @@
 import { Supply } from '@proc7ts/supply';
 import { IntakeFaucet } from '../../data-faucet.js';
 import { DataInfusion } from '../../data-infusion.js';
+import { DataSink } from '../../data-sink.js';
 import { DataAdmix } from '../data-admix.js';
 import { DataMix } from '../data-mix.js';
 import { DataMixer } from '../data-mixer.js';
@@ -10,7 +11,7 @@ import { SingleAdmix$Blend } from './single-admix.blend.js';
  * @internal
  */
 export interface DataAdmix$Removed {
-  readonly supply: Supply;
+  readonly admixSupply: Supply;
   readonly pour?: undefined;
   readonly extend?: undefined;
 }
@@ -31,7 +32,7 @@ export class DataAdmix$Entry<T, TOptions extends unknown[], TMix extends DataMix
       return;
     }
 
-    return new DataAdmix$Entry(admix, this.#createBlend(mixer, infuse, admix, supply), supply);
+    return new DataAdmix$Entry(admix, supply, this.#createBlend(mixer, infuse, admix, supply));
   }
 
   static #createBlend<T, TOptions extends unknown[], TMix extends DataMix>(
@@ -53,26 +54,26 @@ export class DataAdmix$Entry<T, TOptions extends unknown[], TMix extends DataMix
 
   #admix: DataAdmix<T, TOptions, TMix>;
   #blend: DataAdmix.Blend<T, TOptions, TMix>;
-  #supply: Supply;
+  #admixSupply: Supply;
   #prev: DataAdmix$Entry<T, TOptions, TMix> | undefined;
   #next: DataAdmix$Entry<T, TOptions, TMix> | undefined;
 
   private constructor(
     admix: DataAdmix<T, TOptions, TMix>,
+    admixSupply: Supply,
     blend: DataAdmix.Blend<T, TOptions, TMix>,
-    supply: Supply,
   ) {
     this.#admix = admix;
     this.#blend = blend;
-    this.#supply = supply;
-  }
-
-  get supply(): Supply {
-    return this.#supply;
+    this.#admixSupply = admixSupply;
   }
 
   get admix(): DataAdmix<T, TOptions, TMix> {
     return this.#admix;
+  }
+
+  get admixSupply(): Supply {
+    return this.#admixSupply;
   }
 
   get blend(): DataAdmix.Blend<T, TOptions, TMix> {
@@ -82,7 +83,11 @@ export class DataAdmix$Entry<T, TOptions extends unknown[], TMix extends DataMix
   pour(mix: TMix): IntakeFaucet<T> {
     const faucet = this.blend.pour(mix);
 
-    return async (sink, sinkSupply) => await faucet(sink, this.supply.derive().needs(sinkSupply));
+    return async (sink, sinkSupply) => {
+      const supply = this.admixSupply.derive().needs(sinkSupply);
+
+      return await faucet(DataSink(sink, supply), supply);
+    };
   }
 
   extend(
@@ -95,7 +100,7 @@ export class DataAdmix$Entry<T, TOptions extends unknown[], TMix extends DataMix
 
     if (admix.replace) {
       if (supply.isOff) {
-        this.#supply.done();
+        this.#admixSupply.done();
 
         return;
       }
@@ -107,17 +112,17 @@ export class DataAdmix$Entry<T, TOptions extends unknown[], TMix extends DataMix
         replaced: {
           admix: this.admix,
           blend: this.blend,
-          supply: this.supply,
+          supply: this.admixSupply,
         },
       });
     } else if (this.blend.extend) {
       blend = this.blend.extend(admix);
 
-      if (supply.isOff && this.supply.isOff) {
+      if (supply.isOff && this.admixSupply.isOff) {
         return;
       }
     } else {
-      this.supply.done();
+      this.admixSupply.done();
 
       if (supply.isOff) {
         return;
@@ -126,15 +131,15 @@ export class DataAdmix$Entry<T, TOptions extends unknown[], TMix extends DataMix
       blend = DataAdmix$Entry.#createBlend(mixer, infuse, admix, supply);
     }
 
-    return this.#replace(admix, blend, supply);
+    return this.#replace(admix, supply, blend);
   }
 
   #replace(
     admix: DataAdmix<T, TOptions, TMix>,
+    admixSupply: Supply,
     blend: DataAdmix.Blend<T, TOptions, TMix>,
-    supply: Supply,
   ): DataAdmix$Entry<T, TOptions, TMix> {
-    const next = new DataAdmix$Entry<T, TOptions, TMix>(admix, blend, supply);
+    const next = new DataAdmix$Entry<T, TOptions, TMix>(admix, admixSupply, blend);
 
     this.#blend = null!; // Unusable from now on.
     this.#next = next;
@@ -152,12 +157,12 @@ export class DataAdmix$Entry<T, TOptions extends unknown[], TMix extends DataMix
       if (!prev) {
         // No more entries left.
 
-        return { supply: this.supply }; // Drop infusion entry.
+        return { admixSupply: this.admixSupply }; // Drop infusion entry.
       }
 
       // Pop previous admix.
       this.#admix = prev.admix;
-      this.#supply = prev.supply;
+      this.#admixSupply = prev.admixSupply;
 
       // Remove previous entry, as it no longer needed.
       prev.#remove();

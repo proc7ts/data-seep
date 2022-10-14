@@ -24,9 +24,9 @@ export class DataMix$Compound<TMix extends DataMix> implements DataMix.Compound 
 
     return async (sink, sinkSupply) => await entryJoint.faucet(async entry => {
         if (entry.pour) {
-          await sink({ infuse, supply: entry.supply, faucet: entry.pour(this.#mix) });
+          await sink({ infuse, supply: entry.admixSupply, faucet: entry.pour(this.#mix) });
         } else {
-          await sink({ infuse, supply: entry.supply });
+          await sink({ infuse, supply: entry.admixSupply });
         }
       }, sinkSupply);
   }

@@ -23,7 +23,7 @@ export class DataMixer$Admixes<TMix extends DataMix> {
 
     if (!admixJoint) {
       admixJoint = new ValueJoint<DataAdmix$Entry<T, TOptions, TMix> | DataAdmix$Removed>({
-        supply: neverSupply(),
+        admixSupply: neverSupply(),
       });
       this.#admixes.set(
         infusion as DataInfusion<unknown, unknown[]>,

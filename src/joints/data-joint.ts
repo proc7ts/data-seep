@@ -138,7 +138,7 @@ export class DataJoint<out T, in TIn extends T = T> {
 
     valueSank.resolve(whenSank.then(noop));
 
-    return async () => await valueSank.whenDone();
+    return valueSank.whenDone;
   }
 
   /**

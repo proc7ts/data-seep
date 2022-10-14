@@ -69,7 +69,7 @@ export class DataMixer<in out TMix extends DataMix = DataMix> {
       };
     }
 
-    const { supply } = entry;
+    const { admixSupply: supply } = entry;
     const { whenSank } = joint.pass(entry);
 
     supply.whenOff(() => {
@@ -80,7 +80,7 @@ export class DataMixer<in out TMix extends DataMix = DataMix> {
       }
     });
 
-    return { supply: entry.supply, whenSank };
+    return { supply: entry.admixSupply, whenSank };
   }
 
   /**

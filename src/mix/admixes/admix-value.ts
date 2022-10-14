@@ -2,7 +2,7 @@ import { withValue } from '../../infusions/with-value.js';
 import { DataAdmix } from '../data-admix.js';
 
 /**
- * Creates a data admix infusing single `value`.
+ * Creates admix of single `value`.
  *
  * @typeParam T - Infused data type.
  * @typeParam TOptions - Tuple type representing infusion options.

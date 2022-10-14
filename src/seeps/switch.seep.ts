@@ -19,10 +19,10 @@ export function switchSeep<TIn, TOut = TIn>(
       let outSinkSupply: Supply | undefined;
 
       await input(async value => {
-        const withOutput = await convert(value);
-
         outSinkSupply?.done();
         outSinkSupply = sinkSupply.derive();
+
+        const withOutput = await convert(value);
 
         await withOutput(sink, outSinkSupply);
       }, sinkSupply);

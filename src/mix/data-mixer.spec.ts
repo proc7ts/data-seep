@@ -36,11 +36,62 @@ describe('DataMixer', () => {
       expect(sank).toBe(2);
     });
     it('does not add completed admix', async () => {
+      const handle = mixer.add(withTestData, {
+        supply: neverSupply(),
+        pour: () => withTestData(13),
+      });
+
+      const supply = new Supply();
+      let sank: number | undefined;
+
+      const whenSank = mixer.mix(async mix => {
+        await mix.pour(withTestData)(value => {
+          sank = value;
+        }, supply);
+      });
+
+      await new Promise(resolve => setImmediate(resolve));
+      supply.done();
+      await whenSank;
+      await handle.whenSank();
+
+      expect(sank).toBeUndefined();
+    });
+    it('removes existing admix by completed single one', async () => {
       mixer.add(withTestData, admix(1));
 
       const handle = mixer.add(withTestData, {
         supply: neverSupply(),
         pour: () => withTestData(13),
+      });
+
+      const supply = new Supply();
+      let sank: number | undefined;
+
+      const whenSank = mixer.mix(async mix => {
+        await mix.pour(withTestData)(value => {
+          sank = value;
+        }, supply);
+      });
+
+      await new Promise(resolve => setImmediate(resolve));
+      supply.done();
+      await whenSank;
+      await handle.whenSank();
+
+      expect(sank).toBeUndefined();
+    });
+    it('removes existing admix by completed blended one', async () => {
+      mixer.add(withTestData, admix(1));
+
+      const handle = mixer.add(withTestData, {
+        supply: neverSupply(),
+        blend: () => {
+          throw new Error('Should never happen');
+        },
+        replace: () => {
+          throw new Error('Should never happen');
+        },
       });
 
       const supply = new Supply();

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from '@jest/globals';
-import { Supply } from '@proc7ts/supply';
+import { neverSupply, Supply } from '@proc7ts/supply';
 import { DataFaucet } from '../../data-faucet.js';
 import { withValue } from '../../infusions/with-value.js';
 import { BlendedAdmix } from '../blended.admix.js';
@@ -50,6 +50,47 @@ describe('admixArray', () => {
     expect(sank).toEqual([1, 2, 3]);
     supply.off();
     await promise;
+  });
+
+  describe('with three arrays', () => {
+    it('concatenates arrays', async () => {
+      const supply = new Supply();
+      let sank: number[] | undefined;
+
+      mixer.add(withTestData, admixArray(admixValue([1, 2, 3])));
+      mixer.add(withTestData, admixArray(admixValue([4, 5, 6])));
+      mixer.add(withTestData, admixArray(admixValue([7, 8, 9])));
+
+      await mixer.mix(async mix => {
+        await mix.pour(withTestData)(value => {
+          sank = value;
+          supply.off();
+        }, supply);
+      });
+
+      expect(sank).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    });
+    it('handles middle array removal', async () => {
+      const supply = new Supply();
+      let sank: number[] | undefined;
+
+      mixer.add(withTestData, admixArray(admixValue([1, 2, 3])));
+
+      const handle2 = mixer.add(withTestData, admixArray(admixValue([4, 5, 6])));
+
+      mixer.add(withTestData, admixArray(admixValue([7, 8, 9])));
+
+      handle2.supply.off();
+
+      await mixer.mix(async mix => {
+        await mix.pour(withTestData)(value => {
+          sank = value;
+          supply.off();
+        }, supply);
+      });
+
+      expect(sank).toEqual([1, 2, 3, 7, 8, 9]);
+    });
   });
 
   describe('with two arrays', () => {
@@ -233,6 +274,27 @@ describe('admixArray', () => {
 
       expect(sank).toEqual([1, 2, 3, 4, 5, 6]);
     });
+    it('ignores completed value', async () => {
+      const supply = new Supply();
+      let sank: number[] | undefined;
+
+      mixer.add(withTestData, admixArray(admixValue([1, 2, 3])));
+      mixer.add(withTestData, {
+        supply: neverSupply(),
+        pour: () => {
+          throw new Error('Should never happen');
+        },
+      });
+
+      await mixer.mix(async mix => {
+        await mix.pour(withTestData)(value => {
+          sank = value;
+          supply.off();
+        }, supply);
+      });
+
+      expect(sank).toEqual([1, 2, 3]);
+    });
     it('handles value addition', async () => {
       const supply = new Supply();
       const sank: number[][] = [];
@@ -258,6 +320,7 @@ describe('admixArray', () => {
       supply.off();
       await promise;
     });
+
     it('handles array removal', async () => {
       const supply = new Supply();
       let sank: number[] | undefined;

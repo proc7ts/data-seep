@@ -105,6 +105,10 @@ class ArrayAdmix$Blend<
   }
 
   addAdmix(admix: BlendedAdmix<T[], TOptions, TMix>, admixSupply: Supply): this {
+    if (admixSupply.isOff) {
+      return this;
+    }
+
     const blend = admix.blend(this.#context);
 
     return this.addBlend(blend, admixSupply);

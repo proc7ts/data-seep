@@ -12,7 +12,7 @@ import { SingleAdmix } from './single.admix.js';
  * When {@link DataMixer#add added} to data mixture, the resulting data mix provides access to the data poured by
  * corresponding data infusion.
  *
- * Names of functions creating data admixes supposed to have an `admix` prefix. E.g. {@link admix}
+ * Names of functions creating data admixes supposed to have an `admix` prefix. E.g. {@link admixWith}
  * or {@link admixValue},
  *
  * Admixture can be either {@link SingleAdmix single}, or {@link BlendedAdmix blended}.

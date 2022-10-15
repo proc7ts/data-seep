@@ -9,7 +9,9 @@ import { DataAdmix } from '../data-admix.js';
  *
  * @returns New data admix.
  */
-export function admix<T, TOptions extends unknown[]>(...options: TOptions): DataAdmix<T, TOptions> {
+export function admixWith<T, TOptions extends unknown[]>(
+  ...options: TOptions
+): DataAdmix<T, TOptions> {
   return {
     pour: ({ infuse }) => infuse(...options),
   };

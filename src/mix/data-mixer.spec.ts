@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from '@jest/globals';
 import { neverSupply, Supply } from '@proc7ts/supply';
 import { DataFaucet } from '../data-faucet.js';
 import { withValue } from '../infusions/with-value.js';
-import { admix } from './admixes/mod.js';
+import { admixWith } from './admixes/mod.js';
 import { DataMixer } from './data-mixer.js';
 
 describe('DataMixer', () => {
@@ -14,11 +14,11 @@ describe('DataMixer', () => {
 
   describe('add', () => {
     it('replaces previous admix', async () => {
-      const handle1 = mixer.add(withTestData, admix(1));
+      const handle1 = mixer.add(withTestData, admixWith(1));
 
       expect(handle1.supply.isOff).toBeNull();
 
-      const handle2 = mixer.add(withTestData, admix(2));
+      const handle2 = mixer.add(withTestData, admixWith(2));
 
       expect(handle1.supply.isOff?.failed).toBe(false);
       expect(handle2.supply.isOff).toBeNull();
@@ -58,7 +58,7 @@ describe('DataMixer', () => {
       expect(sank).toBeUndefined();
     });
     it('removes existing admix by completed single one', async () => {
-      mixer.add(withTestData, admix(1));
+      mixer.add(withTestData, admixWith(1));
 
       const handle = mixer.add(withTestData, {
         supply: neverSupply(),
@@ -82,7 +82,7 @@ describe('DataMixer', () => {
       expect(sank).toBeUndefined();
     });
     it('removes existing admix by completed blended one', async () => {
-      mixer.add(withTestData, admix(1));
+      mixer.add(withTestData, admixWith(1));
 
       const handle = mixer.add(withTestData, {
         supply: neverSupply(),

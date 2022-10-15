@@ -4,18 +4,18 @@ import { DataFaucet } from '../../data-faucet.js';
 import { withValue } from '../../infusions/with-value.js';
 import { BlendedAdmix } from '../blended.admix.js';
 import { DataMixer } from '../data-mixer.js';
-import { admix } from './admix.js';
+import { admixWith } from './admix-with.js';
 
-describe('admix', () => {
-  it('is single admix', () => {
-    const admixInstance = admix();
+describe('admixWith', () => {
+  it('is a single admix', () => {
+    const admix = admixWith();
 
-    expect(BlendedAdmix(admixInstance)).not.toBe(admixInstance);
+    expect(BlendedAdmix(admix)).not.toBe(admix);
   });
   it('creates faucet with the given options', async () => {
     const mixer = new DataMixer();
 
-    mixer.add(withTestData, admix(12, 34));
+    mixer.add(withTestData, admixWith(12, 34));
 
     const supply = new Supply();
     let sank: number | undefined;

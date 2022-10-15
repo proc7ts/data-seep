@@ -100,24 +100,23 @@ class ArrayAdmix$Blend<
     })(this.#blends.faucet);
   }
 
-  extend(admix: DataAdmix<T[], TOptions, TMix>): this {
-    admix = BlendedAdmix(admix);
-
-    const { supply = new Supply() } = admix;
+  extend(context: DataAdmix.ExtensionContext<T[], TOptions, TMix>): this {
+    const { added, supply } = context;
+    const admix = BlendedAdmix(added);
 
     return this.addAdmix(admix, supply);
   }
 
-  addAdmix(admix: BlendedAdmix<T[], TOptions, TMix>, supply: Supply): this {
+  addAdmix(admix: BlendedAdmix<T[], TOptions, TMix>, admixSupply: Supply): this {
     const blend = admix.blend(this.#context);
 
-    return this.addBlend(blend, supply);
+    return this.addBlend(blend, admixSupply);
   }
 
-  addBlend(blend: DataAdmix.Blend<T[], TOptions, TMix>, supply: Supply): this {
-    blend.supply.as(this.supply);
+  addBlend(blend: DataAdmix.Blend<T[], TOptions, TMix>, admixSupply: Supply): this {
+    this.supply.alsoOff(blend.supply);
 
-    const keySupply = new Supply().as(supply).needs(this.supply);
+    const keySupply = new Supply().as(admixSupply).needs(this.supply);
     const blends = this.#blends.value;
 
     blends.set(keySupply, blend);

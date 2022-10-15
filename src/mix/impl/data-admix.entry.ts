@@ -128,7 +128,7 @@ export class DataAdmix$Entry<T, TOptions extends unknown[], TMix extends DataMix
         return;
       }
 
-      blendFactory = () => blend.extend!(admix);
+      blendFactory = () => blend.extend!({ mixer, infuse, supply, added: admix });
     } else {
       this.admixSupply.done();
 

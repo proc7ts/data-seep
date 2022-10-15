@@ -35,24 +35,24 @@ export class ArrayAdmix<
   }
 
   blend(
-    context: DataAdmix.AdditionContext<T[], TOptions, TMix>,
+    request: DataAdmix.AdditionRequest<T[], TOptions, TMix>,
   ): DataAdmix.Blend<T[], TOptions, TMix> {
-    const blend = this.#admix.blend(context);
+    const blend = this.#admix.blend(request);
 
-    return new ArrayAdmix$Blend(context, blend.supply).addBlend(blend, context.supply);
+    return new ArrayAdmix$Blend(request, blend.supply).addBlend(blend, request.supply);
   }
 
   replace(
-    context: DataAdmix.ReplacementContext<T[], TOptions, TMix>,
+    request: DataAdmix.ReplacementRequest<T[], TOptions, TMix>,
   ): DataAdmix.Blend<T[], TOptions, TMix> {
-    const { replaced } = context;
+    const { replaced } = request;
     const { blend } = replaced;
 
     if (blend instanceof ArrayAdmix$Blend) {
       return blend.addAdmix(this.#admix, this.supply);
     }
 
-    return new ArrayAdmix$Blend(context)
+    return new ArrayAdmix$Blend(request)
       .addBlend(blend, replaced.supply)
       .addAdmix(this.#admix, this.supply);
   }
@@ -65,11 +65,11 @@ class ArrayAdmix$Blend<
   in out TMix extends DataMix = DataMix,
 > implements DataAdmix.Blend<T[], TOptions, TMix> {
 
-  readonly #context: DataAdmix.AdditionContext<T[], TOptions, TMix>;
+  readonly #context: DataAdmix.AdditionRequest<T[], TOptions, TMix>;
   readonly #supply: Supply;
   readonly #blends = new ValueJoint<Map<Supply, DataAdmix.Blend<T[], TOptions, TMix>>>(new Map());
 
-  constructor(context: DataAdmix.AdditionContext<T[], TOptions, TMix>, supply = new Supply()) {
+  constructor(context: DataAdmix.AdditionRequest<T[], TOptions, TMix>, supply = new Supply()) {
     this.#context = context;
     this.#supply = supply;
     this.#blends.supply.as(supply);
@@ -100,11 +100,8 @@ class ArrayAdmix$Blend<
     })(this.#blends.faucet);
   }
 
-  extend(context: DataAdmix.ExtensionContext<T[], TOptions, TMix>): this {
-    const { added, supply } = context;
-    const admix = BlendedAdmix(added);
-
-    return this.addAdmix(admix, supply);
+  extend({ added, supply }: DataAdmix.ExtensionRequest<T[], TOptions, TMix>): this {
+    return this.addAdmix(BlendedAdmix(added), supply);
   }
 
   addAdmix(admix: BlendedAdmix<T[], TOptions, TMix>, admixSupply: Supply): this {

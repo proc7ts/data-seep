@@ -35,21 +35,21 @@ export interface BlendedAdmix<
    *
    * A {@link replace} method is called instead if defined and admix for the same infusion already added to the mix.
    *
-   * @param context - Context of admix addition.
+   * @param request - Admix addition request.
    *
    * @returns Data blend used to pour infused data.
    */
-  blend(context: DataAdmix.AdditionContext<T, TOptions, TMix>): DataAdmix.Blend<T, TOptions, TMix>;
+  blend(request: DataAdmix.AdditionRequest<T, TOptions, TMix>): DataAdmix.Blend<T, TOptions, TMix>;
 
   /**
    * Replaces existing admix for the same infusion.
    *
-   * @param context - Context of admix replacement.
+   * @param request - Admix replacement request.
    *
    * @returns Data blend used to pour infused data from now on.
    */
   replace?(
-    context: DataAdmix.ReplacementContext<T, TOptions, TMix>,
+    request: DataAdmix.ReplacementRequest<T, TOptions, TMix>,
   ): DataAdmix.Blend<T, TOptions, TMix>;
 }
 
@@ -79,7 +79,7 @@ class BlendedAdmix$BySingle<T, TOptions extends unknown[], TMix extends DataMix>
     return this.#admix.supply;
   }
 
-  blend(context: DataAdmix.AdditionContext<T, TOptions, TMix>): DataAdmix.Blend<T, TOptions, TMix> {
+  blend(context: DataAdmix.AdditionRequest<T, TOptions, TMix>): DataAdmix.Blend<T, TOptions, TMix> {
     return new SingleAdmix$Blend(context.infuse, this.#admix, new Supply());
   }
 

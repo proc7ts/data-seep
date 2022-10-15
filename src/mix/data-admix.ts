@@ -129,7 +129,7 @@ export namespace DataAdmix {
   }
 
   /**
-   * Context of data admix addition.
+   * Data admix addition request.
    *
    * Passed by {@link DataMixer#add} method to admix in order to {@link BlendedAdmix#blend create} new data blend.
    *
@@ -137,7 +137,7 @@ export namespace DataAdmix {
    * @typeParam TOptions - Tuple type representing infusion options.
    * @typeParam TMix - Type of resulting data mix.
    */
-  export interface AdditionContext<
+  export interface AdditionRequest<
     out T,
     in TOptions extends unknown[],
     in out TMix extends DataMix,
@@ -161,19 +161,19 @@ export namespace DataAdmix {
   }
 
   /**
-   * Context of data admix extension.
+   * Data admix extension request.
    *
-   * Passed by {@link DataAdmix#add} method to existing data blend in order to {@link Blend#extend extends} it.
+   * Passed by {@link DataAdmix#add} method to existing admix data blend in order to {@link Blend#extend extend} it.
    *
    * @typeParam T - Type of data infused by admix.
    * @typeParam TOptions - Tuple type representing infusion options.
    * @typeParam TMix - Type of resulting data mix.
    */
-  export interface ExtensionContext<
+  export interface ExtensionRequest<
     out T,
     in out TOptions extends unknown[],
     in out TMix extends DataMix,
-  > extends AdditionContext<T, TOptions, TMix> {
+  > extends AdditionRequest<T, TOptions, TMix> {
     /**
      * Added admix.
      */
@@ -181,7 +181,7 @@ export namespace DataAdmix {
   }
 
   /**
-   * Context of data admix replacement.
+   * Data admix replacement request.
    *
    * Passed by {@link DataMixer#add} method to admix in order to {@link BlendedAdmix#replace replace} existing admix.
    *
@@ -189,11 +189,11 @@ export namespace DataAdmix {
    * @typeParam TOptions - Tuple type representing infusion options.
    * @typeParam TMix - Type of resulting data mix.
    */
-  export interface ReplacementContext<
+  export interface ReplacementRequest<
     out T,
     in out TOptions extends unknown[],
     in out TMix extends DataMix = DataMix,
-  > extends AdditionContext<T, TOptions, TMix> {
+  > extends AdditionRequest<T, TOptions, TMix> {
     /**
      * Replaced admix data info.
      */
@@ -253,10 +253,10 @@ export namespace DataAdmix {
      * This method is not called when the added blended admix has a {@link BlendedAdmix#replace replace} method, which
      * is called instead.
      *
-     * @param context - Context of admix extension.
+     * @param request - Admix extension request.
      *
      * @returns Data blend used to pour infused data from now on.
      */
-    extend?(context: ExtensionContext<T, TOptions, TMix>): Blend<T, TOptions, TMix>;
+    extend?(request: ExtensionRequest<T, TOptions, TMix>): Blend<T, TOptions, TMix>;
   }
 }

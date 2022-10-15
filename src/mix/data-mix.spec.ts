@@ -63,12 +63,14 @@ describe('DataMix', () => {
       mixer.add(withTestData, { pour: () => withTestData(1) });
       mixer.add(withTestData2, { pour: () => withTestData2('test') });
 
+      const supply = new Supply();
       let sank: { first: number; second: string } | undefined;
 
       await mixer.mix(async mix => {
         await mix.pourAll({ first: withTestData, second: withTestData2 })(value => {
           sank = value;
-        });
+          supply.off();
+        }, supply);
       });
 
       expect(sank).toEqual({ first: 1, second: 'test' });

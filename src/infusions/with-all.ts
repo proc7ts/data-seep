@@ -30,6 +30,7 @@ export function withAll<TIntakes extends WithAll.Intakes>(
     let whenIntakesReady: Promise<void> | null = null;
 
     const allValuesSupply = new Supply();
+    const allIntakesSankSupply = allValuesSupply.derive().whenOff(noop); // Errors handled by other means
     let activeSinkCount = 0;
     let prevValues: Partial<TSeep> = {};
     let values: Partial<TSeep> | null = null; // null while sinking!
@@ -81,7 +82,7 @@ export function withAll<TIntakes extends WithAll.Intakes>(
         }
         if (!--activeSinkCount) {
           // Stop pouring when all sinks completed.
-          allValuesSupply.done();
+          allIntakesSankSupply.done();
         }
       }
     };
@@ -128,7 +129,7 @@ export function withAll<TIntakes extends WithAll.Intakes>(
         }
 
         // While intake value is in use, its sink should not return, as this makes the value invalid.
-        const intakeValueSupply = new Supply().needs(allValuesSupply).needs(intakeSinkSupply);
+        const intakeValueSupply = intakeSinkSupply.derive().needs(allIntakesSankSupply);
 
         prevIntakeValueSupply = intakeValueSupply;
 
@@ -137,7 +138,20 @@ export function withAll<TIntakes extends WithAll.Intakes>(
         await intakeValueSupply.whenDone();
       };
 
-      intake(sinkIntake, intakeSinkSupply).catch(error => allValuesSupply.fail(error));
+      const acceptIntake = async (): Promise<void> => {
+        try {
+          await intake(sinkIntake, intakeSinkSupply);
+
+          if (!activeSinkCount) {
+            // Stop pouring when all sinks completed.
+            allValuesSupply.done();
+          }
+        } catch (error) {
+          allValuesSupply.fail(error);
+        }
+      };
+
+      acceptIntake().catch(noop);
     });
 
     if (!totalIntakeCount) {

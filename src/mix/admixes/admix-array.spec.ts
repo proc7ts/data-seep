@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from '@jest/globals';
 import { Supply } from '@proc7ts/supply';
 import { DataFaucet } from '../../data-faucet.js';
 import { withValue } from '../../infusions/with-value.js';
+import { BlendedAdmix } from '../blended.admix.js';
 import { DataMixer } from '../data-mixer.js';
 import { admixArray } from './admix-array.js';
 import { admixValue } from './admix-value.js';
@@ -13,6 +14,11 @@ describe('admixArray', () => {
     mixer = new DataMixer();
   });
 
+  it('is blended admix', () => {
+    const admix = admixArray(admixValue([]));
+
+    expect(BlendedAdmix(admix)).toBe(admix);
+  });
   it('pours the given array', async () => {
     const supply = new Supply();
     let sank: number[] | undefined;

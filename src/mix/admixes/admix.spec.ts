@@ -2,10 +2,16 @@ import { describe, expect, it } from '@jest/globals';
 import { Supply } from '@proc7ts/supply';
 import { DataFaucet } from '../../data-faucet.js';
 import { withValue } from '../../infusions/with-value.js';
+import { BlendedAdmix } from '../blended.admix.js';
 import { DataMixer } from '../data-mixer.js';
 import { admix } from './admix.js';
 
 describe('admix', () => {
+  it('is single admix', () => {
+    const admixInstance = admix();
+
+    expect(BlendedAdmix(admixInstance)).not.toBe(admixInstance);
+  });
   it('creates faucet with the given options', async () => {
     const mixer = new DataMixer();
 

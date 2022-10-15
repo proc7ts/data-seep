@@ -17,7 +17,7 @@ export class ValueJoint<out T, in TIn extends T = T> extends DataJoint<T, TIn> {
   #dropValue?: () => void;
 
   /**
-   * Contructs value joint.
+   * Constructs value joint.
    *
    * @param value - Initial value to sink to the added sinks until a new one accepted.
    */

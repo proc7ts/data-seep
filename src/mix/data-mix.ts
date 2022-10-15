@@ -1,13 +1,14 @@
-import { Supply } from '@proc7ts/supply';
-import { DataFaucet } from '../data-faucet.js';
+import { DataFaucet, IntakeFaucet } from '../data-faucet.js';
 import { DataInfusion } from '../data-infusion.js';
 import { withAll, WithAll } from '../infusions/with-all.js';
+import { withNone } from '../infusions/with-none.js';
+import { switchSeep } from '../seeps/switch.seep.js';
 import { DataAdmix } from './data-admix.js';
 
 /**
  * Data mix provides access to data {@link DataMixer#mix mixed into data mixer}.
  */
-export abstract class DataMix {
+export abstract class DataMix implements DataMix.Compound {
 
   /**
    * Pours updates to admixes infusing data by particular `infusion`.
@@ -32,11 +33,9 @@ export abstract class DataMix {
    * @returns Infused data faucet.
    */
   pour<T, TOptions extends unknown[]>(infusion: DataInfusion<T, TOptions>): DataFaucet<T> {
-    const admixFaucet = this.watch(infusion);
-
-    return async (sink, sinkSupply = new Supply()) => await admixFaucet(async ({ faucet }) => {
-        await faucet?.(sink, sinkSupply);
-      });
+    return switchSeep(({ faucet = withNone() }: DataAdmix.Update<T, TOptions>) => faucet)(
+      this.watch(infusion),
+    );
   }
 
   /**
@@ -60,6 +59,42 @@ export abstract class DataMix {
 }
 
 export namespace DataMix {
+  /**
+   * Mixed data compound.
+   *
+   * Provides access to data infused into some data mix.
+   *
+   * Used by {@link DataMix.Compounder} to provide custom data mix implementation.
+   *
+   * @typeParam TMix - Supported data mix.
+   */
+  export interface Compound {
+    /**
+     * Pours updates to admixes infusing data by particular `infusion`.
+     *
+     * @typeParam T - Infused data type. I.e. the type of data poured by returned faucet.
+     * @typeParam TOptions - Infusion options.
+     * @param infusion - Source data infusion.
+     *
+     * @returns Admix updates faucet.
+     */
+    watch<T, TOptions extends unknown[]>(
+      infusion: DataInfusion<T, TOptions>,
+    ): DataFaucet<DataAdmix.Update<T, TOptions>>;
+  }
+
+  /**
+   * Mixed data compounder used by {@link DataMixer data mixer} to customize data mix implementation.
+   *
+   * @typeParam TMix - Type of supported data mix.
+   * @param createCompound - Mixed data compound factory function, accepting a data mix instance as its only parameter.
+   *
+   * @returns Custom data mix faucet.
+   */
+  export type Compounder<out TMix extends DataMix = DataMix> = (
+    createCompound: (this: void, mix: TMix) => Compound,
+  ) => IntakeFaucet<TMix>;
+
   /**
    * Infuses record for data faucet created by {@link DataMix#pourAll} method.
    *

@@ -16,6 +16,7 @@ import { DataFaucet } from './data-faucet.js';
  * @returns Created data faucet.
  */
 export type DataInfusion<out T, in TOptions extends unknown[]> = (
+  this: void,
   ...options: TOptions
 ) => DataFaucet<T>;
 

@@ -1,4 +1,5 @@
 import { DataFaucet } from '../data-faucet.js';
+import { DataSink } from '../data-sink.js';
 
 /**
  * Creates data faucet that pours single `value` to target sink.
@@ -10,9 +11,6 @@ import { DataFaucet } from '../data-faucet.js';
  */
 export function withValue<T>(value: T | PromiseLike<T>): DataFaucet<T> {
   return async (sink, sinkSupply) => {
-    sinkSupply?.whenOff(() => {
-      sink = () => sinkSupply.whenDone();
-    });
-    await sink(await value);
+    await DataSink(sink, sinkSupply)(await value);
   };
 }

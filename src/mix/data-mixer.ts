@@ -1,13 +1,14 @@
-import { neverSupply, Supply } from '@proc7ts/supply';
-import { DataFaucet, IntakeFaucet } from '../data-faucet.js';
+import { Supply } from '@proc7ts/supply';
+import { DataFaucet } from '../data-faucet.js';
 import { DataInfusion } from '../data-infusion.js';
 import { DataSink } from '../data-sink.js';
 import { withValue } from '../infusions/with-value.js';
-import { ValueJoint } from '../joints/value-joint.js';
 import { DataAdmix } from './data-admix.js';
-import { DataMixCompound, DataMixCompounder } from './data-mix-compound.js';
 import { DataMix } from './data-mix.js';
 import { DefaultDataMix } from './default-data-mix.js';
+import { DataAdmix$Entry } from './impl/data-admix.entry.js';
+import { DataMix$Compound } from './impl/data-mix.compound.js';
+import { DataMixer$Admixes } from './impl/data-mixer.admixes.js';
 
 /**
  * Data mixer allows to mix data originated from different {@link DataInfusion infusions},
@@ -16,24 +17,24 @@ import { DefaultDataMix } from './default-data-mix.js';
  *
  * @typeParam TMix - Type of resulting data mix.
  */
-export class DataMixer<TMix extends DataMix = DataMix> {
+export class DataMixer<in out TMix extends DataMix = DataMix> {
 
-  readonly #compounder: DataMixCompounder<TMix>;
+  readonly #compounder: DataMix.Compounder<TMix>;
   readonly #admixes = new DataMixer$Admixes<TMix>();
 
   /**
    * Constructs data mixer.
    *
-   * @param init - Initialization tuple containing mixed data compounder. The one puring {@link DefaultDataMix} will be
+   * @param init - Initialization tuple containing mixed data compounder. The one pouring {@link DefaultDataMix} will be
    * used when omitted.
    */
   constructor(
     ...init: DataMix extends TMix
-      ? [compounder?: DataMixCompounder<TMix>]
-      : [compounder: DataMixCompounder<TMix>]
+      ? [compounder?: DataMix.Compounder<TMix>]
+      : [compounder: DataMix.Compounder<TMix>]
   );
 
-  constructor(compounder: DataMixCompounder<TMix> = DataMix$createDefault) {
+  constructor(compounder: DataMix.Compounder<TMix> = DataMix$createDefault) {
     this.#compounder = compounder;
   }
 
@@ -44,39 +45,46 @@ export class DataMixer<TMix extends DataMix = DataMix> {
    *
    * @typeParam T - Infused data type. I.e. the type of data poured by created faucet.
    * @typeParam TOptions - Tuple type representing infusion options.
+   * @param infuse - The infusion of data pored by `admix`.
    * @param admix - Data admix to add.
    *
-   * @returns Gandle of added admix.
+   * @returns Handle of added admix.
    */
-  add<T, TOptions extends unknown[]>(admix: DataAdmix<T, TOptions, TMix>): DataAdmix.Handle {
-    const joint = this.#admixes.joint(admix.infuse);
+  add<T, TOptions extends unknown[]>(
+    infuse: DataInfusion<T, TOptions>,
+    admix: DataAdmix<T, TOptions, TMix>,
+  ): DataAdmix.Handle {
+    const joint = this.#admixes.joint(infuse);
     const prevEntry = joint.value;
+    const entry = prevEntry.extend
+      ? prevEntry.extend(this, infuse, admix)
+      : DataAdmix$Entry.create(this, infuse, admix);
 
-    prevEntry?.supply.done();
+    if (!entry) {
+      const supply = admix.supply!;
 
-    const entry = new DataAdmix$Entry(admix);
-    const { supply } = entry;
-
-    if (supply.isOff) {
       return {
         supply,
         whenSank: () => supply.whenDone(),
       };
     }
 
-    const { whenSank } = joint.add(entry);
+    const { admixSupply: supply } = entry;
+    const { whenSank } = joint.pass(entry);
 
     supply.whenOff(() => {
-      if (joint.value === entry) {
-        joint.add({ supply });
+      const replacement = entry.drop();
+
+      if (replacement) {
+        joint.pass(replacement);
       }
     });
 
-    return { supply, whenSank };
+    return { supply: entry.admixSupply, whenSank };
   }
 
   /**
-   * Mixes infused data and purs the result data mix to the given `sink`.
+   * Mixes infused data and pours the result data mix to the given `sink`.
    *
    * @param sink - Target sink of data mix.
    * @param sinkSupply - Optional data mix `sink` supply. When cut off the mix should not be poured to target `sink`.
@@ -91,98 +99,10 @@ export class DataMixer<TMix extends DataMix = DataMix> {
 
 }
 
-class DataMixer$Admixes<TMix extends DataMix> {
-
-  readonly #admixes = new Map<
-    DataInfusion<unknown, unknown[]>,
-    ValueJoint<DataAdmix$Entry<unknown, unknown[], TMix> | DataAdmix$Removed>
-  >();
-
-  joint<T, TOptions extends unknown[]>(
-    infusion: DataInfusion<T, TOptions>,
-  ): ValueJoint<DataAdmix$Entry<T, TOptions, TMix> | DataAdmix$Removed> {
-    let admixJoint = this.#admixes.get(infusion as DataInfusion<unknown, unknown[]>) as
-      | ValueJoint<DataAdmix$Entry<T, TOptions, TMix> | DataAdmix$Removed>
-      | undefined;
-
-    if (!admixJoint) {
-      admixJoint = new ValueJoint<DataAdmix$Entry<T, TOptions, TMix> | DataAdmix$Removed>({
-        supply: neverSupply(),
-      });
-      this.#admixes.set(
-        infusion as DataInfusion<unknown, unknown[]>,
-        admixJoint as ValueJoint<DataAdmix$Entry<unknown, unknown[], TMix> | DataAdmix$Removed>,
-      );
-    }
-
-    return admixJoint;
-  }
-
-}
-
-class DataMix$Compound<TMix extends DataMix> implements DataMixCompound {
-
-  readonly #mix: TMix;
-  readonly #admixes: DataMixer$Admixes<TMix>;
-
-  constructor(mix: TMix, admixes: DataMixer$Admixes<TMix>) {
-    this.#mix = mix;
-    this.#admixes = admixes;
-  }
-
-  watch<T, TOptions extends unknown[]>(
-    infuse: DataInfusion<T, TOptions>,
-  ): DataFaucet<DataAdmix.Update<T, TOptions>> {
-    const admixJoint = this.#admixes.joint(infuse);
-
-    return async (sink, sinkSupply) => await admixJoint.faucet(async admix => {
-        if (admix.pour) {
-          await sink({ infuse, supply: admix.supply, faucet: admix.pour(this.#mix) });
-        } else {
-          await sink({ infuse, supply: admix.supply });
-        }
-      }, sinkSupply);
-  }
-
-}
-
 function DataMix$createDefault<TMix extends DataMix>(
-  createCompound: (mix: TMix) => DataMixCompound,
+  createCompound: (mix: TMix) => DataMix.Compound,
 ): DataFaucet<TMix> {
   return withValue(
-    new DefaultDataMix(createCompound as (mix: DataMix) => DataMixCompound) as DataMix as TMix,
+    new DefaultDataMix(createCompound as (mix: DataMix) => DataMix.Compound) as DataMix as TMix,
   );
-}
-
-class DataAdmix$Entry<T, TOptions extends unknown[], TMix extends DataMix> {
-
-  readonly #admix: DataAdmix<T, TOptions, TMix>;
-  readonly #supply: Supply;
-
-  constructor(admix: DataAdmix<T, TOptions, TMix>) {
-    const { supply = new Supply() } = admix;
-
-    this.#admix = admix;
-    this.#supply = supply;
-  }
-
-  get admix(): DataAdmix<T, TOptions, TMix> {
-    return this.#admix;
-  }
-
-  get supply(): Supply {
-    return this.#supply;
-  }
-
-  pour(mix: TMix): IntakeFaucet<T> {
-    const faucet = this.admix.pour(mix);
-
-    return (sink, sinkSupply) => faucet(sink, this.supply.derive().needs(sinkSupply));
-  }
-
-}
-
-interface DataAdmix$Removed {
-  readonly supply: Supply;
-  readonly pour?: undefined;
 }

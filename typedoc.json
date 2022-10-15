@@ -1,6 +1,12 @@
 {
   "entryPoints": ["src/mod.ts"],
   "excludePrivate": true,
+  "externalSymbolLinkMappings": {
+    "@proc7ts/supply": {
+      "Supply": "https://proc7ts.github.io/supply/classes/Supply.html",
+      "SupplyOut": "https://proc7ts.github.io/supply/classes/SupplyOut.html"
+    }
+  },
   "name": "Data Seep",
   "out": "./target/typedoc"
 }

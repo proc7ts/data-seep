@@ -3,6 +3,7 @@ import { noop } from '@proc7ts/primitives';
 import { Supply, SupplyOut } from '@proc7ts/supply';
 import { DataFaucet } from '../data-faucet.js';
 import { DataSink } from '../data-sink.js';
+import { sinkAll } from '../sink-all.js';
 
 /**
  * Data joint connects {@link DataSink data sink} with {@link DataFaucet data faucet}.
@@ -24,32 +25,37 @@ export class DataJoint<out T, in TIn extends T = T> {
    */
   constructor() {
     this.#sink = this.#pour.bind(this);
-    this.#faucet = this.#addSink.bind(this);
+
+    const faucet = this.#addSink.bind(this);
+
+    this.#faucet = async (sink, sinkSupply) => await sinkAll(
+        faucet,
+        sink,
+        sinkSupply ? sinkSupply.derive().needs(this.supply) : this.supply,
+      );
   }
 
   async #pour(value: TIn): Promise<void> {
-    const { whenAccepted, whenSank } = this.add(value);
+    const { whenAccepted, whenSank } = this.pass(value);
 
     await Promise.all([whenAccepted?.(), whenSank()]);
   }
 
-  async #addSink(sink: DataSink<T>, sinkSupply?: SupplyOut): Promise<void> {
+  async #addSink(sink: DataSink<T>, sinkSupply: SupplyOut): Promise<void> {
     const supply = new Supply();
 
     supply
       .whenOff(() => {
         this.#sinks.delete(supply);
       })
-      .needs(this.supply);
-
-    sinkSupply?.alsoOff(supply);
+      .needs(sinkSupply);
 
     if (supply.isOff) {
       return await supply.whenDone();
     }
 
     this.#sinks.set(supply, sink);
-    await this.sinkAdded(sink, supply);
+    await Promise.all([this.sinkAdded(sink, supply), supply.whenDone()]);
   }
 
   /**
@@ -70,20 +76,20 @@ export class DataJoint<out T, in TIn extends T = T> {
   }
 
   /**
-   * Data foucet pouring data values sank to {@link sink joint sink}.
+   * Data faucet pouring data values sank to {@link sink joint sink}.
    */
   get faucet(): DataFaucet<T> {
     return this.#faucet;
   }
 
   /**
-   * Adds the value to the this joint.
+   * Passes value through this joint.
    *
-   * @param value - Value to add.
+   * @param value - Value to pass.
    *
-   * @returns Value addition result.
+   * @returns State of value passage.
    */
-  add(value: TIn): DataJoint.Addition {
+  pass(value: TIn): DataJoint.Passage {
     const { supply } = this;
 
     if (supply.isOff) {
@@ -105,33 +111,41 @@ export class DataJoint<out T, in TIn extends T = T> {
       return;
     }
 
-    const valueAccepted = new PromiseResolver();
+    const { resolve, whenDone } = new PromiseResolver();
 
-    valueAccepted.resolve(Promise.resolve(whenAccepted).then(noop));
+    resolve(whenAccepted);
 
-    return async () => await valueAccepted.whenDone();
+    return whenDone;
   }
 
   #pourValue(value: TIn): () => Promise<void> {
-    const valueSank = new PromiseResolver();
-    const whenSank = Promise.all([...this.#sinks.values()].map(async sink => await sink(value)));
+    const { resolve, whenDone } = new PromiseResolver();
+    const whenSank = Promise.all(
+      [...this.#sinks.entries()].map(async ([supply, sink]) => {
+        try {
+          await sink(value);
+        } catch (error) {
+          supply.fail(error);
+          throw error;
+        }
+      }),
+    );
 
-    valueSank.resolve(whenSank.then(noop));
+    resolve(whenSank.then(noop));
 
-    return async () => await valueSank.whenDone();
+    return whenDone;
   }
 
   /**
-   * Called when new data value {@link add added} to accept the new value.
+   * Called when new data value {@link pass added} to accept the new value.
    *
    * Does nothing by default.
    *
    * @param _value - Accepted data value.
    *
-   * @returns Ether nothing if the value accepted immediately, or a promise-like instance resolved when the value
-   * accepted.
+   * @returns Ether nothing if the value accepted immediately, or promise resolved when the value accepted.
    */
-  protected acceptValue(_value: TIn): void | PromiseLike<unknown> {
+  protected acceptValue(_value: TIn): void | Promise<void> {
     // Do nothing.
   }
 
@@ -144,9 +158,9 @@ export class DataJoint<out T, in TIn extends T = T> {
    * @param _sink - Added data sink.
    * @param _sinkSupply - Added data sink supply. When cut off the data won't be poured to target `sink`.
    *
-   * @returns Either nothing, or a promise-like instance resolved when the sink added.
+   * @returns Either nothing, or a promise resolved when the sink added.
    */
-  protected sinkAdded(_sink: DataSink<T>, _sinkSupply: Supply): void | PromiseLike<unknown> {
+  protected sinkAdded(_sink: DataSink<T>, _sinkSupply: Supply): void | PromiseLike<void> {
     // Do nothing.
   }
 
@@ -154,22 +168,24 @@ export class DataJoint<out T, in TIn extends T = T> {
 
 export namespace DataJoint {
   /**
-   * A result of value {@link DataJoint#add addition} to tdata joint.
+   * State of value {@link DataJoint#pass passage} through the joint.
    *
-   * Indicates the value has been added. May also be used to await for value acceptance.
+   * May be used to await for value acceptance.
    */
-  export interface Addition {
+  export interface Passage {
     /**
-     * Waits for the value to be {@link DataJoint#accept accepted}.
+     * Waits for the passed value to be {@link DataJoint#acceptValue accepted}.
      *
-     * When absent, the data value accepted immediately.
+     * The absence means, the value accepted immediately.
+     *
+     * @returns Promise resolved when value accepted.
      */
     whenAccepted?(this: void): Promise<void>;
 
     /**
-     * Waits for the valuie to be sank by data sinks {@link DataJoint#sinkAdded added} to the joint.
+     * Waits for the passed value to be sank by data sinks {@link DataJoint#sinkAdded added} to the joint.
      *
-     * @returns Promise resolved when data sank.
+     * @returns Promise resolved when value sank.
      */
     whenSank(this: void): Promise<void>;
   }

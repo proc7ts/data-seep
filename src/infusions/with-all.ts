@@ -21,7 +21,7 @@ export function withAll<TIntakes extends WithAll.Intakes>(
 ): DataFaucet<WithAll.SeepType<TIntakes>> {
   type TSeep = WithAll.SeepType<TIntakes>;
 
-  return async (sink, sinkSpply = new Supply()) => {
+  return async (sink, sinkSupply = new Supply()) => {
     const keys = Reflect.ownKeys(intakes);
 
     let totalIntakeCount = keys.length;
@@ -30,9 +30,12 @@ export function withAll<TIntakes extends WithAll.Intakes>(
     let whenIntakesReady: Promise<void> | null = null;
 
     const allValuesSupply = new Supply();
+    const allIntakesSankSupply = allValuesSupply.derive().whenOff(noop); // Errors handled by other means
     let activeSinkCount = 0;
     let prevValues: Partial<TSeep> = {};
     let values: Partial<TSeep> | null = null; // null while sinking!
+    let rev = 0;
+    let pouredRev = 0;
 
     const pourValues = async (): Promise<void> => {
       if (!missingIntakeCount) {
@@ -49,6 +52,13 @@ export function withAll<TIntakes extends WithAll.Intakes>(
 
         await whenIntakesReady;
       }
+
+      // Ensure values poured at most once.
+      if (pouredRev >= rev) {
+        return;
+      }
+
+      pouredRev = rev;
 
       // Prevent values from overriding while sinking them.
       let sankValues: TSeep;
@@ -72,7 +82,7 @@ export function withAll<TIntakes extends WithAll.Intakes>(
         }
         if (!--activeSinkCount) {
           // Stop pouring when all sinks completed.
-          allValuesSupply.done();
+          allIntakesSankSupply.done();
         }
       }
     };
@@ -83,7 +93,7 @@ export function withAll<TIntakes extends WithAll.Intakes>(
         allValuesSupply.cutOff(reason);
       }
     })
-      .needs(sinkSpply)
+      .needs(sinkSupply)
       .needs(allValuesSupply);
 
     keys.forEach(<TKey extends keyof TIntakes>(key: TKey) => {
@@ -119,19 +129,34 @@ export function withAll<TIntakes extends WithAll.Intakes>(
         }
 
         // While intake value is in use, its sink should not return, as this makes the value invalid.
-        const intakeValueSupply = new Supply().needs(allValuesSupply).needs(intakeSinkSupply);
+        const intakeValueSupply = intakeSinkSupply.derive().needs(allIntakesSankSupply);
 
         prevIntakeValueSupply = intakeValueSupply;
 
+        ++rev;
         await pourValues();
         await intakeValueSupply.whenDone();
       };
 
-      intake(sinkIntake, intakeSinkSupply).catch(error => allValuesSupply.fail(error));
+      const acceptIntake = async (): Promise<void> => {
+        try {
+          await intake(sinkIntake, intakeSinkSupply);
+
+          if (!activeSinkCount) {
+            // Stop pouring when all sinks completed.
+            allValuesSupply.done();
+          }
+        } catch (error) {
+          allValuesSupply.fail(error);
+        }
+      };
+
+      acceptIntake().catch(noop);
     });
 
     if (!totalIntakeCount) {
       // No intakes. Pour once then finish.
+      ++rev;
       await pourValues();
       allValuesSupply.done();
     }

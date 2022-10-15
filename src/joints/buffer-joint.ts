@@ -7,7 +7,7 @@ import { DataJoint } from './data-joint.js';
  * In addition to connecting {@link DataSink data sink} with {@link DataFaucet data faucet}, the buffer joint also
  * buffers the latest values, and pours them to newly {@link BufferJoint#sinkAdded added} data sinks.
  *
- * Note that the sinking won't complete until the value droped from buffer or joint supply cut off.
+ * Note that the sinking won't complete until the value dropped from buffer or joint supply cut off.
  *
  * @typeParam T - Type of data values poured by {@link DataJoint#faucet joint faucet}.
  * @typeParam TIn - Type of data values accepted by {@link DataJoint#sink joint sink}.

@@ -37,11 +37,14 @@ describe('ValueJoint', () => {
       const joint = new ValueJoint(13);
       let sank: number | undefined;
 
-      await joint.faucet(value => {
+      const whenSank = joint.faucet(value => {
         sank = value;
       });
 
       expect(sank).toBe(13);
+
+      joint.supply.off();
+      await whenSank;
     });
     it('pours last accepted value', async () => {
       const joint = new ValueJoint(0);
@@ -50,7 +53,8 @@ describe('ValueJoint', () => {
       const promise = Promise.all([joint.sink(1), joint.sink(2), joint.sink(3)]);
 
       await new Promise<void>(resolve => setTimeout(resolve));
-      await joint.faucet(value => {
+
+      const whenSank = joint.faucet(value => {
         sank = value;
       });
 
@@ -58,6 +62,7 @@ describe('ValueJoint', () => {
 
       joint.supply.done();
       await promise;
+      await whenSank;
     });
   });
 });

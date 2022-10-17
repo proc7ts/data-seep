@@ -3,12 +3,12 @@ import { IntakeFaucet } from '../data-faucet.js';
 import { DataSeep } from '../data-seep.js';
 
 /**
- * Creates data seep that converts input values to output faucets by the given `converter`, then pours data by the most
- * recent one.
+ * Creates data seep that converts input values to output faucets by the given converter function, then pours data by
+ * the most recent one.
  *
  * @typeParam TIn - Input data type.
  * @typeParam TOut - Output (converted) data type.
- * @param convert - Input value to faucet converter function.
+ * @param convert - Converter of input value to output faucet.
  *
  * @returns New data seep.
  */

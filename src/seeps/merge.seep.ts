@@ -5,14 +5,14 @@ import { DataSeep } from '../data-seep.js';
 import { DataSink } from '../data-sink.js';
 
 /**
- * Creates data seep that converts input values to output faucets by the given `converter`, and data by all output
- * faucets simultaneously.
+ * Creates data seep that converts input values to output faucets by the given converter function, and pours data by all
+ * output faucets simultaneously.
  *
  * Pours data until sink supply cut off.
  *
  * @typeParam TIn - Input data type.
  * @typeParam TOut - Output (converted) data type.
- * @param convert - Input value to faucet converter function.
+ * @param convert - Converter of input value to output faucet.
  *
  * @returns New data seep.
  */

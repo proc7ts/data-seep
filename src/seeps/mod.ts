@@ -1,3 +1,4 @@
+export * from './concat.seep.js';
 export * from './filter.seep.js';
 export * from './map.seep.js';
 export * from './merge.seep.js';

@@ -4,6 +4,7 @@ import { DataSeep } from '../data-seep.js';
 /**
  * Creates data seep that pours input values satisfying the given `predicate`.
  *
+ * @typeParam T - Poured data type.
  * @param predicate - Predicate the output values should satisfy.
  *
  * @returns New data seep.

@@ -163,7 +163,7 @@ export namespace DataAdmix {
   /**
    * Data admix extension request.
    *
-   * Passed by {@link DataAdmix#add} method to existing admix data blend in order to {@link Blend#extend extend} it.
+   * Passed by {@link DataMixer#add} method to existing admix data blend in order to {@link Blend#extend extend} it.
    *
    * @typeParam T - Type of data infused by admix.
    * @typeParam TOptions - Tuple type representing infusion options.

@@ -88,13 +88,7 @@ describe('DataInfusion', () => {
     describe('seep', () => {
       it('customizes data', async () => {
         const withTestValue = DataInfusion(withValue<number>, {
-          into() {
-            return {
-              seep() {
-                return mapSeep((value: number) => value + 100);
-              },
-            };
-          },
+          seep: mapSeep(value => value + 100),
         });
 
         mixer.add(withTestValue, admixWith(1));

@@ -22,7 +22,7 @@ import { mapSeep } from './seeps/map.seep.js';
  */
 export interface DataInfusion<out T, in TOptions extends unknown[]> {
   /**
-   * Customizer of custom data infusion.
+   * Customizes data infusion.
    *
    * This method is called once per {@link DataMixer data mixer}.
    *
@@ -41,23 +41,31 @@ export interface DataInfusion<out T, in TOptions extends unknown[]> {
 /**
  * Creates custom data infusion.
  *
- * Created infusion infuses data with faucet created by the given infusion function. It is a different instance,
- * however.
+ * Infuses data with faucet created by the given infusion function.
  *
  * @param infuse - Data infusion to customize.
- * @param init - Initialization options.
+ * @param init - Data infusion initializer.
  *
- * @returns Custom data infusion.
+ * @returns New custom data infusion instance.
  */
 export function DataInfusion<T, TOptions extends unknown[] = []>(
   infuse: DataInfusion<T, TOptions>,
-  init?: DataInfusion.Init<T, TOptions>,
-): DataInfusion<T, TOptions>;
-
-export function DataInfusion<T, TOptions extends unknown[] = []>(
-  infuse: DataInfusion<T, TOptions>,
-  { name = infuse.name, into }: DataInfusion.Init<T, TOptions> = {},
+  init: DataInfusion.Init<T, TOptions> = {},
 ): DataInfusion<T, TOptions> {
+  let customInit: DataInfusion.CustomInit<T, TOptions>;
+
+  if ('seep' in init) {
+    customInit = {
+      ...init,
+      into: () => ({
+        seep: () => init.seep,
+      }),
+    };
+  } else {
+    customInit = init;
+  }
+
+  const { name = infuse.name, into } = customInit;
   const { [name]: infusion } = {
     [name](this: void, ...options: TOptions) {
       return infuse(...options);
@@ -116,14 +124,43 @@ export function DataInfusion<T, TOptions extends unknown[] = []>(
 
 export namespace DataInfusion {
   /**
-   * Data infusion initialization options.
+   * Data infusion initializer.
    *
    * Used to {@link DataInfusion:function create} custom data infusion.
    *
    * @typeParam T - Infused data type. I.e. the type of data poured by created faucet.
    * @typeParam TOptions - Tuple type representing infusion options.
    */
-  export interface Init<out T, in TOptions extends unknown[]> {
+  export type Init<T, TOptions extends unknown[]> = CustomInit<T, TOptions> | SeepInit<T>;
+
+  /**
+   * Data seep infusion initializer.
+   *
+   * This is a shorthand variant of initializer to use in instead of {@link CustomInit fully customized} one.
+   *
+   * @typeParam T - Infused data type. I.e. the type of data poured by created faucet.
+   */
+  export interface SeepInit<in out T> {
+    /**
+     * Function name of custom data infusion.
+     *
+     * @defaultValue Original infusion function name.
+     */
+    readonly name?: string | undefined;
+
+    /**
+     * Infused data seep.
+     */
+    readonly seep: DataSeep<T>;
+  }
+
+  /**
+   * Fully customized data infusion initializer.
+   *
+   * @typeParam T - Infused data type. I.e. the type of data poured by created faucet.
+   * @typeParam TOptions - Tuple type representing infusion options.
+   */
+  export interface CustomInit<out T, in TOptions extends unknown[]> {
     /**
      * Function name of custom data infusion.
      *

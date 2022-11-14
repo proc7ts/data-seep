@@ -6,9 +6,8 @@ import { withValue } from '../infusions/with-value.js';
 import { DataAdmix } from './data-admix.js';
 import { DataMix } from './data-mix.js';
 import { DefaultDataMix } from './default-data-mix.js';
-import { DataAdmix$Entry } from './impl/data-admix.entry.js';
+import { DataAdmix$Store } from './impl/data-admix.store.js';
 import { DataMix$Compound } from './impl/data-mix.compound.js';
-import { DataMixer$Admixes } from './impl/data-mixer.admixes.js';
 
 /**
  * Data mixer allows to mix data originated from different {@link DataInfusion infusions},
@@ -20,7 +19,7 @@ import { DataMixer$Admixes } from './impl/data-mixer.admixes.js';
 export class DataMixer<in out TMix extends DataMix = DataMix> {
 
   readonly #compounder: DataMix.Compounder<TMix>;
-  readonly #admixes = new DataMixer$Admixes<TMix>();
+  readonly #admixes: DataAdmix$Store<TMix>;
 
   /**
    * Constructs data mixer.
@@ -36,6 +35,7 @@ export class DataMixer<in out TMix extends DataMix = DataMix> {
 
   constructor(compounder: DataMix.Compounder<TMix> = DataMix$createDefault) {
     this.#compounder = compounder;
+    this.#admixes = new DataAdmix$Store(this);
   }
 
   /**
@@ -54,33 +54,7 @@ export class DataMixer<in out TMix extends DataMix = DataMix> {
     infuse: DataInfusion<T, TOptions>,
     admix: DataAdmix<T, TOptions, TMix>,
   ): DataAdmix.Handle {
-    const joint = this.#admixes.joint(infuse);
-    const prevEntry = joint.value;
-    const entry = prevEntry.extend
-      ? prevEntry.extend(this, infuse, admix)
-      : DataAdmix$Entry.create(this, infuse, admix);
-
-    if (!entry) {
-      const supply = admix.supply!;
-
-      return {
-        supply,
-        whenSank: () => supply.whenDone(),
-      };
-    }
-
-    const { admixSupply: supply } = entry;
-    const { whenSank } = joint.pass(entry);
-
-    supply.whenOff(() => {
-      const replacement = entry.drop();
-
-      if (replacement) {
-        joint.pass(replacement);
-      }
-    });
-
-    return { supply: entry.admixSupply, whenSank };
+    return this.#admixes.slotFor(infuse).admix(admix);
   }
 
   /**

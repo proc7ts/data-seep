@@ -330,5 +330,26 @@ describe('BufferJoint', () => {
         await whenSank;
       });
     });
+
+    describe('supply', () => {
+      it('stops pouring values', async () => {
+        const sank: number[] = [];
+
+        const whenSank = joint.faucet(value => {
+          sank.push(value);
+        });
+
+        joint.pass(1);
+        joint.pass(2);
+        await new Promise<void>(resolve => setImmediate(resolve));
+        expect(sank).toEqual([1, 2]);
+
+        joint.supply.done();
+        joint.pass(3);
+        await whenSank;
+
+        expect(sank).toEqual([1, 2]);
+      });
+    });
   });
 });

@@ -83,6 +83,49 @@ describe('DataInfusion', () => {
 
         expect(sank).toBe(101);
       });
+      it('combines with preceding infuser', async () => {
+        const withTestValue = DataInfusion(
+          DataInfusion(withValue<number>, {
+            seep: mapSeep((value: number) => value + 100),
+          }),
+          {
+            into() {
+              return {
+                watch<TUpdate extends DataAdmix.Update<number, [number | PromiseLike<number>]>>() {
+                  return mapSeep(
+                    (update: TUpdate): DataAdmix.Update<number, [number | PromiseLike<number>]> => {
+                      if (!update.faucet) {
+                        return update;
+                      }
+
+                      return {
+                        ...update,
+                        faucet: mapSeep((value: number) => value * 10)(update.faucet),
+                      };
+                    },
+                  );
+                },
+              };
+            },
+          },
+        );
+
+        expect(withTestValue.name).toBe('withValue');
+
+        mixer.add(withTestValue, admixWith(1));
+
+        const supply = new Supply();
+        let sank: number | undefined;
+
+        await mixer.mix(async mix => {
+          await mix.pour(withTestValue)(value => {
+            sank = value;
+            supply.done();
+          }, supply);
+        });
+
+        expect(sank).toBe(1010);
+      });
     });
 
     describe('seep', () => {
@@ -105,46 +148,64 @@ describe('DataInfusion', () => {
 
         expect(sank).toBe(101);
       });
-    });
-    it('is applied after watcher seep', async () => {
-      const withTestValue = DataInfusion(withValue<number>, {
-        into() {
-          return {
-            watch<TUpdate extends DataAdmix.Update<number, [number | PromiseLike<number>]>>() {
-              return mapSeep(
-                (update: TUpdate): DataAdmix.Update<number, [number | PromiseLike<number>]> => {
-                  if (!update.faucet) {
-                    return update;
-                  }
+      it('combines with preceding infuser', async () => {
+        const withTestValue = DataInfusion(
+          DataInfusion(withValue<number>, {
+            seep: mapSeep((value: number) => value + 100),
+          }),
+          {
+            seep: mapSeep((value: number) => value * 10),
+          },
+        );
 
-                  return {
-                    ...update,
-                    faucet: mapSeep((value: number) => value + 100)(update.faucet),
-                  };
-                },
-              );
-            },
-            seep() {
-              return mapSeep((value: number) => value * 10);
-            },
-          };
-        },
+        expect(withTestValue.name).toBe('withValue');
+
+        mixer.add(withTestValue, admixWith(1));
+
+        const supply = new Supply();
+        let sank: number | undefined;
+
+        await mixer.mix(async mix => {
+          await mix.pour(withTestValue)(value => {
+            sank = value;
+            supply.done();
+          }, supply);
+        });
+
+        expect(sank).toBe(1010);
       });
-
-      mixer.add(withTestValue, admixWith(1));
-
-      const supply = new Supply();
-      let sank: number | undefined;
-
-      await mixer.mix(async mix => {
-        await mix.pour(withTestValue)(value => {
-          sank = value;
-          supply.done();
-        }, supply);
-      });
-
-      expect(sank).toBe(1010);
     });
+
+    describe('empty', () => {
+      it('uses preceding infuser', async () => {
+        const withTestValue = DataInfusion(
+          DataInfusion(withValue<number>, {
+            name: 'withTestValue',
+            seep: mapSeep((value: number) => value * 10),
+          }),
+          {
+            into: () => ({}),
+          },
+        );
+
+        expect(withTestValue.name).toBe('withTestValue');
+
+        mixer.add(withTestValue, admixWith(1));
+
+        const supply = new Supply();
+        let sank: number | undefined;
+
+        await mixer.mix(async mix => {
+          await mix.pour(withTestValue)(value => {
+            sank = value;
+            supply.done();
+          }, supply);
+        });
+
+        expect(sank).toBe(10);
+      });
+    });
+
     it('handles admix replacement', async () => {
       const withTestValue = DataInfusion(withValue<number>, {
         into() {

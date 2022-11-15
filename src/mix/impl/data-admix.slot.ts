@@ -17,7 +17,7 @@ export class DataAdmix$Slot<T, TOptions extends unknown[], TMix extends DataMix>
   constructor(mixer: DataMixer<TMix>, infusion: DataInfusion<T, TOptions>) {
     this.#mixer = mixer;
     this.#infusion = infusion;
-    this.#infused = infusion.DataInfusion$into?.<TMix>(mixer) || {};
+    this.#infused = infusion.DataInfusion$into?.<TMix>(mixer, infusion) || {};
     this.#joint = new ValueJoint({
       admixSupply: neverSupply(),
     });

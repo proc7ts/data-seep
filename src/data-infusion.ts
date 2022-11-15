@@ -28,11 +28,14 @@ export interface DataInfusion<out T, in TOptions extends unknown[]> {
    *
    * @typeParam TMix - Type of data mix the data infused into.
    * @param mixer - Data mixer the data infused into.
+   * @param infuse - Customized infusion.
    *
    * @returns Custom data infuser.
    */
   DataInfusion$into?<TMix extends DataMix>(
+    this: void,
     mixer: DataMixer<TMix>,
+    infuse: DataInfusion<T, TOptions>,
   ): DataInfusion.Infuser<T, TOptions, TMix>;
 
   (this: void, ...options: TOptions): DataFaucet<T>;
@@ -54,7 +57,7 @@ export function DataInfusion<T, TOptions extends unknown[] = []>(
 ): DataInfusion<T, TOptions> {
   let customInit: DataInfusion.CustomInit<T, TOptions>;
 
-  if ('seep' in init) {
+  if (DataInfusion$isSeepInit(init)) {
     customInit = {
       ...init,
       into: () => ({
@@ -65,6 +68,7 @@ export function DataInfusion<T, TOptions extends unknown[] = []>(
     customInit = init;
   }
 
+  const { DataInfusion$into: prevInto } = infuse;
   const { name = infuse.name, into } = customInit;
   const { [name]: infusion } = {
     [name](this: void, ...options: TOptions) {
@@ -73,18 +77,31 @@ export function DataInfusion<T, TOptions extends unknown[] = []>(
   } as { [key: typeof name]: DataInfusion<T, TOptions> };
 
   if (into) {
-    infusion.DataInfusion$into = function <TMix extends DataMix>(
-      this: DataInfusion<T, TOptions>,
+    infusion.DataInfusion$into = <TMix extends DataMix>(
       mixer: DataMixer<TMix>,
-    ) {
-      const infuserInit: DataInfusion.InfuserInit<T, TOptions, TMix> = into.call<
-        DataInfusion<T, TOptions>,
-        [DataMixer<TMix>],
-        DataInfusion.InfuserInit<T, TOptions, TMix>
-      >(this, mixer);
+      infuse: DataInfusion<T, TOptions>,
+    ): DataInfusion.Infuser<T, TOptions, TMix> => {
+      const infuserInit: DataInfusion.Infuser.Init<T, TOptions, TMix> = into(mixer, infuse);
+      const prevInfuser = prevInto?.(mixer, infuse);
+      const prevWatch = prevInfuser?.watch;
 
-      if (!infuserInit.seep) {
-        return infuserInit;
+      if (DataInfusion$isInfuser(infuserInit)) {
+        if (!prevWatch) {
+          return infuserInit;
+        }
+
+        const { watch } = infuserInit;
+
+        if (!watch) {
+          return prevInfuser;
+        }
+
+        return {
+          ...infuserInit,
+          watch(mix: TMix) {
+            return input => watch(mix)(prevWatch(mix)(input));
+          },
+        };
       }
 
       return {
@@ -92,8 +109,8 @@ export function DataInfusion<T, TOptions extends unknown[] = []>(
         watch<TUpdate extends DataAdmix.Update<T, TOptions>>(
           mix: TMix,
         ): DataSeep<TUpdate, DataAdmix.Update<T, TOptions>> {
-          const updateSeep = infuserInit.watch?.<TUpdate>(mix);
-          const dataSeep: DataSeep<T> = infuserInit.seep!(mix);
+          const prevUpdateSeep = prevInfuser?.watch?.(mix);
+          const dataSeep: DataSeep<T> = infuserInit.seep(mix);
           const updateDataSeep = mapSeep(
             (update: DataAdmix.Update<T, TOptions>): DataAdmix.Update<T, TOptions> => {
               if (!update.faucet) {
@@ -107,8 +124,8 @@ export function DataInfusion<T, TOptions extends unknown[] = []>(
             },
           );
 
-          if (updateSeep) {
-            return faucet => updateDataSeep(updateSeep(faucet));
+          if (prevUpdateSeep) {
+            return faucet => updateDataSeep(prevUpdateSeep(faucet));
           }
 
           return updateDataSeep;
@@ -172,39 +189,16 @@ export namespace DataInfusion {
      * Data infusion {@link DataInfusion#DataInfusion$into customizer}.
      *
      * @typeParam TMix - Type of data mix the data infused into.
-     * @param this - Always refers to infusion itself.
      * @param mixer - Data mixer the data infused into.
+     * @param infuse - Customized infusion.
      *
      * @returns Initializer of custom data infuser.
      */
     into?<TMix extends DataMix>(
-      this: DataInfusion<T, TOptions>,
+      this: void,
       mixer: DataMixer<TMix>,
-    ): DataInfusion.InfuserInit<T, TOptions, TMix>;
-  }
-
-  /**
-   * Initializer of {@link Infuser custom data infuser}.
-   *
-   * @typeParam T - Infused data type. I.e. the type of data poured by created faucet.
-   * @typeParam TOptions - Tuple type representing infusion options.
-   * @typeParam TMix - Type of data mix the data infused into.
-   */
-  export interface InfuserInit<
-    out T,
-    in TOptions extends unknown[],
-    in out TMix extends DataMix = DataMix,
-  > extends Infuser<T, TOptions, TMix> {
-    /**
-     * Creates infused data seep.
-     *
-     * This is a convenience option that produces an additional data seep of {@link Infuser#watch admix updates}.
-     *
-     * @param mix - Source data mix.
-     *
-     * @returns Infused data seep.
-     */
-    seep?<TData extends T>(mix: TMix): DataSeep<TData, T>;
+      infuse: DataInfusion<T, TOptions>,
+    ): DataInfusion.Infuser.Init<T, TOptions, TMix>;
   }
 
   /**
@@ -244,4 +238,51 @@ export namespace DataInfusion {
       mix: TMix,
     ): DataSeep<TUpdate, DataAdmix.Update<T, TOptions>>;
   }
+
+  export namespace Infuser {
+    /**
+     * Initializer of {@link Infuser custom data infuser}.
+     *
+     * @typeParam T - Infused data type. I.e. the type of data poured by created faucet.
+     * @typeParam TOptions - Tuple type representing infusion options.
+     * @typeParam TMix - Type of data mix the data infused into.
+     */
+    export type Init<T, TOptions extends unknown[], TMix extends DataMix = DataMix> =
+      | Infuser<T, TOptions, TMix>
+      | SeepInit<T, TMix>;
+
+    /**
+     * Data seep infuser initializer.
+     *
+     * This is a shorthand variant of initializer to use in instead of {@link Infuser:interface fully customized} one.
+     *
+     * @typeParam T - Infused data type. I.e. the type of data poured by created faucet.
+     * @typeParam TMix - Type of data mix the data infused into.
+     */
+    export interface SeepInit<out T, in out TMix extends DataMix = DataMix> {
+      /**
+       * Creates infused data seep.
+       *
+       * This is a convenience option that produces an additional data seep of {@link Infuser:interface#watch admix
+       * updates}.
+       *
+       * @param mix - Source data mix.
+       *
+       * @returns Infused data seep.
+       */
+      seep<TData extends T>(mix: TMix): DataSeep<TData, T>;
+    }
+  }
+}
+
+function DataInfusion$isSeepInit<T, TOptions extends unknown[]>(
+  init: DataInfusion.Init<T, TOptions>,
+): init is DataInfusion.SeepInit<T> {
+  return 'seep' in init && typeof init.seep === 'function';
+}
+
+function DataInfusion$isInfuser<T, TOptions extends unknown[], TMix extends DataMix>(
+  init: DataInfusion.Infuser.Init<T, TOptions, TMix>,
+): init is DataInfusion.Infuser<T, TOptions, TMix> {
+  return !('seep' in init && typeof init.seep === 'function');
 }

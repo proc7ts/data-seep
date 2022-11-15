@@ -8,12 +8,12 @@ import { DataJoint } from './data-joint.js';
  *
  * Note that the sinking won't complete until another value poured to the joint or joint supply cut off.
  *
- * @typeParam T - Type of data values poured by {@link DataJoint#faucet joint faucet}.
  * @typeParam TIn - Type of data values accepted by {@link DataJoint#sink joint sink}.
+ * @typeParam TOut - Type of data values poured by {@link DataJoint#faucet joint faucet}.
  */
-export class ValueJoint<out T, in TIn extends T = T> extends DataJoint<T, TIn> {
+export class ValueJoint<in TIn extends TOut, out TOut = TIn> extends DataJoint<TIn, TOut> {
 
-  #value: T;
+  #value: TOut;
   #dropValue?: () => void;
 
   /**
@@ -21,7 +21,7 @@ export class ValueJoint<out T, in TIn extends T = T> extends DataJoint<T, TIn> {
    *
    * @param value - Initial value to sink to the added sinks until a new one accepted.
    */
-  constructor(value: T) {
+  constructor(value: TOut) {
     super();
     this.#value = value;
     this.supply.whenOff(() => {
@@ -35,7 +35,7 @@ export class ValueJoint<out T, in TIn extends T = T> extends DataJoint<T, TIn> {
    *
    * Reset to initial one once the {@link supply joint supply} cut off.
    */
-  get value(): T {
+  get value(): TOut {
     return this.#value;
   }
 
@@ -70,7 +70,7 @@ export class ValueJoint<out T, in TIn extends T = T> extends DataJoint<T, TIn> {
    *
    * @returns Either nothing, or a promise-like instance resolved when the sink added.
    */
-  protected async sinkAdded(sink: DataSink<T>, _sinkSupply: Supply<void>): Promise<void> {
+  protected async sinkAdded(sink: DataSink<TOut>, _sinkSupply: Supply<void>): Promise<void> {
     await sink(this.value);
   }
 

@@ -9,21 +9,21 @@ import { DataJoint } from './data-joint.js';
  *
  * Note that the sinking won't complete until the value dropped from buffer or joint supply cut off.
  *
- * @typeParam T - Type of data values poured by {@link DataJoint#faucet joint faucet}.
  * @typeParam TIn - Type of data values accepted by {@link DataJoint#sink joint sink}.
+ * @typeParam TOut - Type of data values poured by {@link DataJoint#faucet joint faucet}.
  */
-export class BufferJoint<out T, in TIn extends T = T>
-  extends DataJoint<T, TIn>
-  implements Iterable<T> {
+export class BufferJoint<in TIn extends TOut, out TOut = TIn>
+  extends DataJoint<TIn, TOut>
+  implements Iterable<TOut> {
 
-  #buffer: BufferJoint.Buffer<T>;
+  #buffer: BufferJoint.Buffer<TOut>;
 
   /**
    * Constructs buffer joint.
    *
    * @param buffer - Either buffer to use, a maximum buffer capacity, or nothing for infinite buffer size. Minimum 0.
    */
-  constructor(buffer?: BufferJoint.Buffer<T> | number) {
+  constructor(buffer?: BufferJoint.Buffer<TOut> | number) {
     super();
 
     if (buffer == null) {
@@ -50,7 +50,7 @@ export class BufferJoint<out T, in TIn extends T = T>
     });
   }
 
-  [Symbol.iterator](): IterableIterator<T> {
+  [Symbol.iterator](): IterableIterator<TOut> {
     return this.values();
   }
 
@@ -59,7 +59,7 @@ export class BufferJoint<out T, in TIn extends T = T>
    *
    * @returns Iterable iterator of buffered values.
    */
-  values(): IterableIterator<T> {
+  values(): IterableIterator<TOut> {
     return this.#buffer[Symbol.iterator]();
   }
 
@@ -87,7 +87,10 @@ export class BufferJoint<out T, in TIn extends T = T>
    *
    * @returns Either nothing, or a promise-like instance resolved when the sink added.
    */
-  protected override async sinkAdded(sink: DataSink<T>, _sinkSupply: Supply<void>): Promise<void> {
+  protected override async sinkAdded(
+    sink: DataSink<TOut>,
+    _sinkSupply: Supply<void>,
+  ): Promise<void> {
     await Promise.all([...this.#buffer].map(async value => await sink(value)));
   }
 

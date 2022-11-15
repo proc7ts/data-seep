@@ -10,14 +10,14 @@ import { sinkAll } from '../sink-all.js';
  *
  * The data sank to the {@link DataJoint#sink sink} is poured to the {@link DataJoint#faucet faucet}.
  *
- * @typeParam T - Type of data values poured by {@link DataJoint#faucet joint faucet}.
  * @typeParam TIn - Type of data values accepted by {@link DataJoint#sink joint sink}.
+ * @typeParam TOut - Type of data values poured by {@link DataJoint#faucet joint faucet}.
  */
-export class DataJoint<out T, in TIn extends T = T> {
+export class DataJoint<in TIn extends TOut, out TOut = TIn> {
 
   readonly #supply = new Supply();
   readonly #sink: DataSink<TIn>;
-  readonly #faucet: DataFaucet<T>;
+  readonly #faucet: DataFaucet<TOut>;
   readonly #sinks = new Map<Supply, DataSink<TIn>>();
 
   /**
@@ -41,7 +41,7 @@ export class DataJoint<out T, in TIn extends T = T> {
     await Promise.all([whenAccepted?.(), whenSank()]);
   }
 
-  async #addSink(sink: DataSink<T>, sinkSupply: SupplyOut): Promise<void> {
+  async #addSink(sink: DataSink<TOut>, sinkSupply: SupplyOut): Promise<void> {
     const supply = new Supply();
 
     supply
@@ -78,7 +78,7 @@ export class DataJoint<out T, in TIn extends T = T> {
   /**
    * Data faucet pouring data values sank to {@link sink joint sink}.
    */
-  get faucet(): DataFaucet<T> {
+  get faucet(): DataFaucet<TOut> {
     return this.#faucet;
   }
 
@@ -160,7 +160,7 @@ export class DataJoint<out T, in TIn extends T = T> {
    *
    * @returns Either nothing, or a promise resolved when the sink added.
    */
-  protected sinkAdded(_sink: DataSink<T>, _sinkSupply: Supply): void | PromiseLike<void> {
+  protected sinkAdded(_sink: DataSink<TOut>, _sinkSupply: Supply): void | PromiseLike<void> {
     // Do nothing.
   }
 

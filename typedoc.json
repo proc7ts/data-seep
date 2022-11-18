@@ -8,5 +8,8 @@
     }
   },
   "name": "Data Seep",
-  "out": "./target/typedoc"
+  "out": "./target/typedoc",
+  "compilerOptions": {
+    "module": 7 /* ES2022 */
+  }
 }

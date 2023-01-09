@@ -1,5 +1,4 @@
 import { describe, expect, it } from '@jest/globals';
-import { asis } from '@proc7ts/primitives';
 import { Supply } from '@proc7ts/supply';
 import { DataFaucet } from '../data-faucet.js';
 import { BufferJoint } from '../joints/buffer-joint.js';
@@ -15,7 +14,7 @@ describe('concatSeep', () => {
     inputs.pass(input2.faucet);
 
     const sank: number[] = [];
-    const promise = concatSeep(asis<DataFaucet<number>>)(inputs.faucet)(value => {
+    const promise = concatSeep((value: DataFaucet<number>) => value)(inputs.faucet)(value => {
       sank.push(value);
     });
 
@@ -45,7 +44,7 @@ describe('concatSeep', () => {
 
     const supply = new Supply();
     const sank: number[] = [];
-    const promise = concatSeep(asis<DataFaucet<number>>)(inputs.faucet)(value => {
+    const promise = concatSeep((value: DataFaucet<number>) => value)(inputs.faucet)(value => {
       sank.push(value);
     }, supply);
 

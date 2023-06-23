@@ -1,13 +1,13 @@
 {
-  "name": "@proc7ts/seep",
+  "name": "data-seep",
   "version": "0.1.1",
-  "description": "Tools for implementing Data Seep Pattern",
+  "description": "Data Seep Pattern implementation",
   "keywords": [
     "data-faucet",
     "data-seep",
     "data-sink"
   ],
-  "homepage": "https://github.com/proc7ts/seep",
+  "homepage": "https://github.com/proc7ts/data-seep",
   "repository": {
     "type": "git",
     "url": "ssh://git@github.com:proc7ts/seep.git"
@@ -15,13 +15,13 @@
   "license": "MIT",
   "author": "Ruslan Lopatin <ruslan.lopatin@gmail.com>",
   "bugs": {
-    "url": "https://github.com/proc7ts/seep/issues"
+    "url": "https://github.com/proc7ts/data-seep/issues"
   },
   "type": "module",
-  "types": "./dist/seep.d.ts",
+  "types": "./dist/data-seep.d.ts",
   "exports": {
-    "types": "./dist/seep.d.ts",
-    "default": "./dist/seep.js"
+    "types": "./dist/data-seep.d.ts",
+    "default": "./dist/data-seep.js"
   },
   "sideEffects": false,
   "dependencies": {

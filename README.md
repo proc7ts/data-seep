@@ -7,18 +7,18 @@
 [![GitHub Project][github-image]][github-url]
 [![API Documentation][api-docs-image]][api documentation]
 
-[npm-image]: https://img.shields.io/npm/v/@proc7ts/seep.svg?logo=npm
-[npm-url]: https://www.npmjs.com/package/@proc7ts/seep
-[build-status-img]: https://github.com/proc7ts/seep/workflows/Build/badge.svg
-[build-status-link]: https://github.com/proc7ts/seep/actions?query=workflow:Build
+[npm-image]: https://img.shields.io/npm/v/data-seep.svg?logo=npm
+[npm-url]: https://www.npmjs.com/package/data-seep
+[build-status-img]: https://github.com/proc7ts/data-seep/workflows/Build/badge.svg
+[build-status-link]: https://github.com/proc7ts/data-seep/actions?query=workflow:Build
 [quality-img]: https://app.codacy.com/project/badge/Grade/7b713de99b284eb1960b7b3ad9abf730
-[quality-link]: https://www.codacy.com/gh/proc7ts/seep/dashboard?utm_source=github.com&utm_medium=referral&utm_content=proc7ts/seep&utm_campaign=Badge_Grade
+[quality-link]: https://www.codacy.com/gh/proc7ts/data-seep/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_Grade
 [coverage-img]: https://app.codacy.com/project/badge/Coverage/7b713de99b284eb1960b7b3ad9abf730
-[coverage-link]: https://www.codacy.com/gh/proc7ts/seep/dashboard?utm_source=github.com&utm_medium=referral&utm_content=proc7ts/seep&utm_campaign=Badge_Coverage
+[coverage-link]: https://www.codacy.com/gh/proc7ts/data-seep/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_Coverage
 [github-image]: https://img.shields.io/static/v1?logo=github&label=GitHub&message=project&color=informational
-[github-url]: https://github.com/proc7ts/seep
+[github-url]: https://github.com/proc7ts/data-seep
 [api-docs-image]: https://img.shields.io/static/v1?logo=typescript&label=API&message=docs&color=informational
-[api documentation]: https://proc7ts.github.io/seep/
+[api documentation]: https://proc7ts.github.io/data-seep/
 
 ## Data Seep Pattern
 

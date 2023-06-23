@@ -4,7 +4,9 @@ import { Sink } from '../sink.js';
 
 let faucetNameSeq = 0;
 
-export function createFaucet<T, TArgs extends unknown[]>(pour: Faucet<T, TArgs>): Faucet<T, TArgs> {
+export function createFaucet<T, TArgs extends unknown[] = []>(
+  pour: Faucet<T, TArgs>,
+): Faucet<T, TArgs> {
   const { name } = pour;
   const faucetName = name || `#${++faucetNameSeq}`;
 

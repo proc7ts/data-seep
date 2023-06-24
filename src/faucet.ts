@@ -19,7 +19,7 @@ import { Sink } from './sink.js';
  *
  * @returns Promise resolved when all data poured and sank.
  */
-export type Faucet<out T, in TArgs extends unknown[] = unknown[]> = (
+export type Faucet<out T, in TArgs extends unknown[] = []> = (
   this: void,
   ...args: [...TArgs, Sink<T>]
 ) => Promise<void>;

@@ -1,36 +1,25 @@
 import { sinkOnce } from '../impl/sink-once.js';
 import { Sink } from '../sink.js';
 
-export function withValve(sink: Sink<(reason?: unknown) => void>): Promise<void> {
-  const valve = new Valve();
+export interface Valve {
+  whenClosed(callback: (this: void, reason: unknown) => void): void;
+  close(reason?: unknown): void;
+  withValve(sink: Sink<Valve>): Promise<void>;
+}
 
-  try {
-    return sinkOnce(sink, reason => {
-      valve.close(reason);
-    });
-  } finally {
-    valve.done();
-  }
+export async function withValve(sink: Sink<Valve>): Promise<void> {
+  await new ValveHandle().withValve(sink);
 }
 
 export function whenClosed(callback: (this: void, reason: unknown) => void): void {
   currentValve?.whenClosed(callback);
 }
 
-class Valve {
+class ValveHandle implements Valve {
 
-  readonly #prev: Valve | undefined;
   #closed = false;
   #reason?: unknown;
   readonly #callbacks: ((reason: unknown) => void)[] = [];
-
-  constructor() {
-    this.#prev = currentValve;
-    if (currentValve) {
-      currentValve.whenClosed(this.close.bind(this));
-    }
-    currentValve = this;
-  }
 
   whenClosed(callback: (reason: unknown) => void): void {
     if (this.#closed) {
@@ -57,10 +46,19 @@ class Valve {
     }
   }
 
-  done(): void {
-    currentValve = this.#prev;
+  withValve(sink: Sink<Valve>): Promise<void> {
+    const prevValve = currentValve;
+
+    prevValve?.whenClosed(this.close.bind(this));
+    currentValve = this;
+
+    try {
+      return sinkOnce(sink, this);
+    } finally {
+      currentValve = prevValve;
+    }
   }
 
 }
 
-let currentValve: Valve | undefined;
+let currentValve: ValveHandle | undefined;

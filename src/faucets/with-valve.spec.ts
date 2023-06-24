@@ -13,8 +13,8 @@ describe('withValve', () => {
     let result: number | undefined;
 
     await expect(
-      withValve(async close => {
-        close();
+      withValve(async valve => {
+        valve.close();
 
         await faucet(value => {
           result = value;
@@ -33,10 +33,10 @@ describe('withValve', () => {
     const results: number[] = [];
 
     await expect(
-      withValve(async close => {
+      withValve(async valve => {
         await faucet(value => {
           results.push(value);
-          close();
+          valve.close();
         });
       }),
     ).resolves.toBeUndefined();
@@ -52,8 +52,8 @@ describe('withValve', () => {
     let result: number | undefined;
 
     await expect(
-      withValve(async close => {
-        close(error);
+      withValve(async valve => {
+        valve.close(error);
 
         await faucet(value => {
           result = value;
@@ -73,10 +73,10 @@ describe('withValve', () => {
     const results: number[] = [];
 
     await expect(
-      withValve(async close => {
+      withValve(async valve => {
         await faucet(value => {
           results.push(value);
-          close(error);
+          valve.close(error);
         });
       }),
     ).rejects.toEqual(new ValveClosedError(undefined, { cause: error }));
@@ -92,8 +92,8 @@ describe('withValve', () => {
     let result: number | undefined;
 
     await expect(
-      withValve(async close => {
-        close(error);
+      withValve(async valve => {
+        valve.close(error);
 
         await faucet(value => {
           result = value;
@@ -132,10 +132,10 @@ describe('withValve', () => {
       const results: number[] = [];
 
       await expect(
-        withValve(async close => {
+        withValve(async valve => {
           await faucet(value => {
             results.push(value);
-            close();
+            valve.close();
           });
         }),
       ).resolves.toBeUndefined();
@@ -156,11 +156,12 @@ describe('withValve', () => {
       const results: number[] = [];
 
       await expect(
-        withValve(async close => {
-          await withValve(async () => {
+        withValve(async valve => {
+          await Promise.resolve();
+          await valve.withValve(async () => {
             await faucet(value => {
               results.push(value);
-              close(error);
+              valve.close(error);
             });
           });
         }),

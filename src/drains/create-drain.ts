@@ -1,47 +1,47 @@
 import { createSink } from '../impl/create-sink.js';
 import { Sink } from '../sink.js';
+import { Drain } from './drain.js';
 import { inflowHandle } from './inflow.impl.js';
-import { Vat } from './vat.js';
 
-let vatNameSeq = 0;
+let drainNameSeq = 0;
 
 /*#__NO_SIDE_EFFECTS__*/
-export function createVat<T, TArgs extends unknown[]>(
+export function createDrain<T, TArgs extends unknown[]>(
   open: (this: void, ...args: TArgs) => (sink: Sink<T>) => Promise<void>,
   openDefault: ((this: void) => (sink: Sink<T>) => Promise<void>) | false,
-): Vat<T, TArgs>;
+): Drain<T, TArgs>;
 
-export function createVat<T, TArgs extends unknown[] | []>(
+export function createDrain<T, TArgs extends unknown[] | []>(
   open: (this: void, ...args: TArgs) => (sink: Sink<T>) => Promise<void>,
-): Vat<T, TArgs>;
+): Drain<T, TArgs>;
 
-export function createVat<T, TArgs extends unknown[]>(
+export function createDrain<T, TArgs extends unknown[]>(
   open: (this: void, ...args: TArgs) => (sink: Sink<T>) => Promise<void>,
   openDefault?: ((this: void) => (sink: Sink<T>) => Promise<void>) | false,
-): Vat<T, TArgs> {
+): Drain<T, TArgs> {
   const { name } = open;
-  const vatName = name || `#${++vatNameSeq}`;
-  const key = Symbol(vatName);
+  const drainName = name || `#${++drainNameSeq}`;
+  const key = Symbol(drainName);
 
   return {
-    async [vatName](...args: [...TArgs, Sink<T>] | [Sink<T>]): Promise<void> {
+    async [drainName](...args: [...TArgs, Sink<T>] | [Sink<T>]): Promise<void> {
       const inflow = inflowHandle()();
       let pour: (sink: Sink<T>) => Promise<void>;
       let sink: Sink<T>;
 
       if (args.length > 2) {
-        // Arguments specified. Open the vat.
+        // Arguments specified. Open the drain.
         inflow[key] = pour = open(...(args.slice(0, -1) as TArgs));
         sink = args[args.length - 1] as Sink<T>;
       } else {
         // No arguments.
         if (key in inflow) {
-          // Reuse already opened vat.
+          // Reuse already opened drain.
           pour = inflow[key] as typeof pour;
         } else if (openDefault === false) {
-          throw new TypeError(`Vat ${vatName} not started yet`);
+          throw new TypeError(`Vat ${drainName} not started yet`);
         } else {
-          // Opens the vat without arguments.
+          // Opens the drain without arguments.
           inflow[key] = pour =
             openDefault?.() ?? (open as (this: void) => (sink: Sink<T>) => Promise<void>)();
         }
@@ -58,5 +58,5 @@ export function createVat<T, TArgs extends unknown[]>(
         whenDone!,
       ]);
     },
-  }[vatName];
+  }[drainName];
 }

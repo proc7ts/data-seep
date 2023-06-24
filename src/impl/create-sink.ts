@@ -8,20 +8,28 @@ export function createSink<T>(
   sink: Sink<T>,
 ): Sink<T> {
   let sinkCount = 0;
-  let isClosed = false;
-  let done = resolve;
+  let isClosed = Valve$isOpen;
 
   return async (value: T) => {
     whenClosed(reason => {
-      isClosed = true;
-      if (!sinkCount) {
-        Valve$close(resolve, reject, reason);
+      if (reason === undefined) {
+        isClosed = Valve$isClosed;
+
+        if (!sinkCount) {
+          resolve();
+        }
       } else {
-        done = () => Valve$close(resolve, reject, reason);
+        const error = Valve$error(reason);
+
+        isClosed = () => {
+          throw error;
+        };
+
+        reject(error);
       }
     });
 
-    if (isClosed) {
+    if (isClosed()) {
       return;
     }
 
@@ -29,7 +37,7 @@ export function createSink<T>(
     try {
       await sink(value);
       if (!--sinkCount) {
-        done();
+        resolve();
       }
     } catch (error) {
       reject(error);
@@ -38,14 +46,16 @@ export function createSink<T>(
   };
 }
 
-function Valve$close(resolve: () => void, reject: (reason: unknown) => void, cause: unknown): void {
-  if (cause === undefined) {
-    resolve();
-  } else {
-    reject(
-      typeof cause === 'string'
-        ? new ValveClosedError(cause)
-        : new ValveClosedError(undefined, { cause }),
-    );
-  }
+function Valve$isOpen(): boolean {
+  return false;
+}
+
+function Valve$isClosed(): boolean {
+  return true;
+}
+
+function Valve$error(cause: unknown): unknown {
+  return typeof cause === 'string'
+    ? new ValveClosedError(cause)
+    : new ValveClosedError(undefined, { cause });
 }

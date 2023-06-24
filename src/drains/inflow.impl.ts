@@ -1,26 +1,40 @@
 export interface Inflow {
+  readonly id: number;
+  readonly name?: string;
+  data(): InflowData;
+}
+
+export interface InflowData {
   [key: symbol]: unknown;
 }
 
-export type InflowHandle = () => Inflow;
+export function startInflow(baseInflow: Inflow, name: string | undefined): Inflow {
+  let inflow: InflowData | undefined;
 
-export function startInflow(baseInflow: InflowHandle): InflowHandle {
-  const prevInflow = currentInflow;
-  let inflow: Inflow | undefined;
-
-  currentInflow = () => (inflow ??= Object.create(baseInflow()) as Inflow);
-
-  return prevInflow;
+  return (currentInflow = {
+    id: ++inflowSeq,
+    name,
+    data() {
+      return (inflow ??= Object.create(baseInflow.data()) as InflowData);
+    },
+  });
 }
 
-export function inflowHandle(): InflowHandle {
+export function getInflow(): Inflow {
   return currentInflow;
 }
 
-export function endInflow(baseInflow: InflowHandle): void {
-  currentInflow = baseInflow;
+export function setInflow(prevInflow: Inflow): void {
+  currentInflow = prevInflow;
 }
 
-const rootInflow = {};
+const rootInflowData = {};
 
-let currentInflow: InflowHandle = () => rootInflow;
+let inflowSeq = 0;
+let currentInflow: Inflow = {
+  id: 0,
+  name: 'root',
+  data() {
+    return rootInflowData;
+  },
+};

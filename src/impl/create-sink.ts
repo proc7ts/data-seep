@@ -1,5 +1,5 @@
 import { ValveClosedError } from '../faucets/valve-closed.error.js';
-import { whenClosed } from '../faucets/with-valve.js';
+import { whenClosed } from '../faucets/valve.js';
 import { Sink } from '../sink.js';
 
 export function createSink<T>(

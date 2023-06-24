@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals
 import { noop } from '@proc7ts/primitives';
 import { createFaucet } from './create-faucet.js';
 import { ValveClosedError } from './valve-closed.error.js';
-import { whenClosed, withValve } from './with-valve.js';
+import { whenClosed, withValve } from './valve.js';
 
 describe('withValve', () => {
   it('stops data pouring immediately', async () => {
@@ -142,6 +142,7 @@ describe('withValve', () => {
 
       expect(results).toEqual([1]);
       expect(warnSpy).toHaveBeenCalledWith('Error while closing valve:', callbackError);
+      expect(closed).toBe(true);
     });
   });
 

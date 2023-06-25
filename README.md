@@ -21,7 +21,7 @@ await withLogger({ level: LogLevel.DEBUG }, async logger => {
       logger.info('Starting HTTP server');
 
       await withHttpServer(async server => {
-        server.dispath(
+        server.dispatch(
           {
             path: '/api/user',
             method: 'GET',
@@ -35,7 +35,7 @@ await withLogger({ level: LogLevel.DEBUG }, async logger => {
             await response.send(JSON.stringify(user));
           },
         );
-        server.dispath(
+        server.dispatch(
           {
             path: '/api/user',
             method: 'PUT',

@@ -1,7 +1,7 @@
 {
   "name": "data-seep",
   "version": "0.3.1",
-  "description": "Data Seep Pattern implementation",
+  "description": "Reactive Data Seep",
   "keywords": [
     "data-faucet",
     "data-seep",

@@ -20,9 +20,9 @@
 [api-docs-image]: https://img.shields.io/static/v1?logo=typescript&label=API&message=docs&color=informational
 [api documentation]: https://proc7ts.github.io/data-seep/
 
-## Data Seep Pattern
+## Reactive Data Seep
 
-A code utilizing Data Seep Pattern may look like this:
+A code utilizing Reactive Data Seep pattern looks like this:
 
 ```typescript
 await withLogger({ level: LogLevel.DEBUG }, async logger => {
@@ -105,12 +105,12 @@ await withLogger({ level: LogLevel.DEBUG }, async logger => {
 });
 ```
 
-The pattern relies on variable scoping rules. In particular, the data _inflow_ into outer scope _seep through_ other
+The pattern relies on variable scoping rules. In particular, the data _inflow_ into outer scope _seeps through_ other
 data _faucets_ to inner scopes.
 
 A data _faucet_ function implementing this pattern accepts an asynchronous _sink_ function as its last argument.
-The _sink_ accepts an _inflow_ value as its argument. The _inflow_ value exists while the _sink_ processing it.
-After that, the value is no longer valid.
+A _sink_ function accepts an _inflow_ value as its only argument. The _inflow_ value exists while the _sink_ processing
+it. After that, the value is no longer valid.
 
 **Implementing this pattern does not require the knowledge or use of any third-party libraries or APIs**. However,
 in more complicated scenarios the tools provided by this package may be of help.

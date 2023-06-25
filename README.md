@@ -1,4 +1,4 @@
-# Tools for implementing Data Seep Pattern
+# Reactive Data Seep
 
 [![NPM][npm-image]][npm-url]
 [![Build Status][build-status-img]][build-status-link]
@@ -7,22 +7,7 @@
 [![GitHub Project][github-image]][github-url]
 [![API Documentation][api-docs-image]][api documentation]
 
-[npm-image]: https://img.shields.io/npm/v/data-seep.svg?logo=npm
-[npm-url]: https://www.npmjs.com/package/data-seep
-[build-status-img]: https://github.com/proc7ts/data-seep/workflows/Build/badge.svg
-[build-status-link]: https://github.com/proc7ts/data-seep/actions?query=workflow:Build
-[quality-img]: https://app.codacy.com/project/badge/Grade/7b713de99b284eb1960b7b3ad9abf730
-[quality-link]: https://app.codacy.com/gh/proc7ts/data-seep/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade
-[coverage-img]: https://app.codacy.com/project/badge/Coverage/7b713de99b284eb1960b7b3ad9abf730
-[coverage-link]: https://app.codacy.com/gh/proc7ts/data-seep/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage
-[github-image]: https://img.shields.io/static/v1?logo=github&label=GitHub&message=project&color=informational
-[github-url]: https://github.com/proc7ts/data-seep
-[api-docs-image]: https://img.shields.io/static/v1?logo=typescript&label=API&message=docs&color=informational
-[api documentation]: https://proc7ts.github.io/data-seep/
-
-## Reactive Data Seep
-
-A code utilizing Reactive Data Seep pattern looks like this:
+Code utilizing Reactive Data Seep pattern looks like this:
 
 ```typescript
 await withLogger({ level: LogLevel.DEBUG }, async logger => {
@@ -114,3 +99,16 @@ it. After that, the value is no longer valid.
 
 **Implementing this pattern does not require the knowledge or use of any third-party libraries or APIs**. However,
 in more complicated scenarios the tools provided by this package may be of help.
+
+[npm-image]: https://img.shields.io/npm/v/data-seep.svg?logo=npm
+[npm-url]: https://www.npmjs.com/package/data-seep
+[build-status-img]: https://github.com/proc7ts/data-seep/workflows/Build/badge.svg
+[build-status-link]: https://github.com/proc7ts/data-seep/actions?query=workflow:Build
+[quality-img]: https://app.codacy.com/project/badge/Grade/7b713de99b284eb1960b7b3ad9abf730
+[quality-link]: https://app.codacy.com/gh/proc7ts/data-seep/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade
+[coverage-img]: https://app.codacy.com/project/badge/Coverage/7b713de99b284eb1960b7b3ad9abf730
+[coverage-link]: https://app.codacy.com/gh/proc7ts/data-seep/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage
+[github-image]: https://img.shields.io/static/v1?logo=github&label=GitHub&message=project&color=informational
+[github-url]: https://github.com/proc7ts/data-seep
+[api-docs-image]: https://img.shields.io/static/v1?logo=typescript&label=API&message=docs&color=informational
+[api documentation]: https://proc7ts.github.io/data-seep/

@@ -2,19 +2,29 @@ import { Faucet } from '../faucet.js';
 import { createSink } from '../impl/create-sink.js';
 import { Sink } from '../sink.js';
 import { Drain } from './drain.js';
-import { getInflow } from './inflow.impl.js';
+import { InflowData, getInflow } from './inflow.impl.js';
 
 let drainNameSeq = 0;
 
-/*#__NO_SIDE_EFFECTS__*/
-export function createDrain<T, TArgs extends unknown[]>(
-  open: (this: void, ...args: TArgs) => Faucet<T>,
-  ...openDefault: [] extends TArgs ? [] : [((this: void) => Faucet<T>) | false]
+/**
+ * Creates new {@link Drain}.
+ *
+ * @typeParam T - Poured data type.
+ * @typeParam TArgs - Type of drain arguments.
+ * @param open - Function that opens drain.
+ * @param defaultOpen - Function that opens drain without arguments, or `false` to prohibit that.
+ *
+ * @returns New drain instance.
+ */
+export function createDrain<T, TArgs extends unknown[] = []>(
+  open: DrainOpener<T, TArgs>,
+  ...defaultOpen: DrainOpenerDefaults<T, TArgs>
 ): Drain<T, TArgs>;
 
-export function createDrain<T, TArgs extends unknown[]>(
-  open: (this: void, ...args: TArgs) => Faucet<T>,
-  openDefault?: ((this: void) => Faucet<T>) | false,
+/*#__NO_SIDE_EFFECTS__*/
+export function createDrain<T, TArgs extends unknown[] = []>(
+  open: DrainOpener<T, TArgs>,
+  defaultOpen?: DrainOpener<T> | false,
 ): Drain<T, TArgs> {
   const { name } = open;
   const drainName = name || `#${++drainNameSeq}`;
@@ -23,44 +33,86 @@ export function createDrain<T, TArgs extends unknown[]>(
   return {
     async [drainName](...args: [...TArgs, Sink<T>] | [Sink<T>]): Promise<void> {
       const inflowData = getInflow().data();
-      let ctl: DrainCtl<T>;
-      let sink: Sink<T>;
 
       if (args.length > 2) {
         // Arguments specified. Open the drain.
-        const pour = open(...(args.slice(0, -1) as TArgs));
-
-        inflowData[key] = ctl = [pour, args.slice(0, -1)];
-
-        sink = args[args.length - 1] as Sink<T>;
+        await openDrain(
+          inflowData,
+          key,
+          open,
+          args.slice(0, -1) as TArgs,
+          args[args.length - 1] as Sink<T>,
+        );
       } else {
         // No arguments.
-        if (key in inflowData) {
+        const opened = inflowData[key];
+        const sink = args[0] as Sink<T>;
+
+        if (opened) {
           // Reuse already opened drain.
-          ctl = inflowData[key] as typeof ctl;
-        } else if (openDefault === false) {
+          await drainOnce(opened as DrainCtl<T>, sink);
+        } else if (defaultOpen === false) {
           throw new TypeError(`Drain ${drainName} not opened yet`);
         } else {
-          // Opens the drain without arguments.
-          const pour =
-            openDefault?.() ?? (open as (this: void) => (sink: Sink<T>) => Promise<void>)();
-
-          inflowData[key] = ctl = [pour, []];
+          // Open no-args drain.
+          await openDrain(inflowData, key, (defaultOpen ?? open) as () => Faucet<T>, [], sink);
         }
-
-        sink = args[0] as Sink<T>;
       }
-
-      let whenDone: Promise<void>;
-
-      await Promise.all([
-        new Promise<void>((resolve, reject) => {
-          whenDone = ctl[0](createSink(resolve, reject, sink));
-        }),
-        whenDone!,
-      ]);
     },
   }[drainName];
 }
 
+/**
+ * Function that opens a {@link createDrain drain}.
+ *
+ * @typeParam T - Poured data type.
+ * @typeParam TArgs - Type of drain arguments.
+ * @param args - Drain arguments.
+ *
+ * @returns Faucet that pours just opened drain data.
+ */
+export type DrainOpener<out T, in TArgs extends unknown[] = []> = (
+  this: void,
+  ...args: TArgs
+) => Faucet<T>;
+
+/**
+ * Function that opens drain without arguments, or `false` to prohibit that.
+ *
+ * @typeParam T - Poured data type.
+ * @typeParam TArgs - Type of drain arguments.
+ */
+export type DrainOpenerDefaults<T, TArgs extends unknown[]> = [] extends TArgs
+  ? []
+  : [DrainOpener<T> | false];
+
 type DrainCtl<T> = readonly [pour: Faucet<T>, args: unknown[]];
+
+async function openDrain<T, TArgs extends unknown[]>(
+  inflowData: InflowData,
+  key: symbol,
+  open: (this: void, ...args: TArgs) => Faucet<T>,
+  args: TArgs,
+  sink: Sink<T>,
+): Promise<void> {
+  const pour = open(...args);
+  const ctl: DrainCtl<T> = [pour, args];
+
+  inflowData[key] = [pour, args.slice(0, -1)];
+  try {
+    await drainOnce(ctl, sink);
+  } finally {
+    inflowData[key] = null;
+  }
+}
+
+async function drainOnce<T>([pour]: DrainCtl<T>, sink: Sink<T>): Promise<void> {
+  let whenDone: Promise<void>;
+
+  await Promise.all([
+    new Promise<void>((resolve, reject) => {
+      whenDone = pour(createSink(resolve, reject, sink));
+    }),
+    whenDone!,
+  ]);
+}

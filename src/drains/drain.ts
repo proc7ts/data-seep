@@ -16,7 +16,7 @@ import { Sink } from '../sink.js';
  * @typeParam T - Poured data type.
  * @typeParam TArgs - Type of drain arguments.
  */
-export interface Drain<out T, in TArgs extends unknown[] = unknown[]> {
+export interface Drain<out T, in TArgs extends unknown[] = []> {
   /**
    * Opens the drain and starts data pouring.
    *

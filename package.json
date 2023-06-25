@@ -10,7 +10,7 @@
   "homepage": "https://github.com/proc7ts/data-seep",
   "repository": {
     "type": "git",
-    "url": "ssh://git@github.com:proc7ts/seep.git"
+    "url": "ssh://git@github.com:proc7ts/data-seep.git"
   },
   "license": "MIT",
   "author": "Ruslan Lopatin <ruslan.lopatin@gmail.com>",

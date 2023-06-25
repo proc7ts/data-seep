@@ -1,8 +1,9 @@
 import { Faucet } from '../faucet.js';
 import { createSink } from '../impl/create-sink.js';
+import { InflowData, getInflow } from '../impl/inflow.js';
 import { Sink } from '../sink.js';
 import { Drain } from './drain.js';
-import { InflowData, getInflow } from './inflow.impl.js';
+import { withInflow } from './with-inflow.js';
 
 let drainNameSeq = 0;
 
@@ -32,30 +33,40 @@ export function createDrain<T, TArgs extends unknown[] = []>(
 
   return {
     async [drainName](...args: [...TArgs, Sink<T>] | [Sink<T>]): Promise<void> {
-      const inflowData = getInflow().data();
+      const inflow = getInflow();
 
-      if (args.length > 2) {
-        // Arguments specified. Open the drain.
-        await openDrain(
-          inflowData,
-          key,
-          open,
-          args.slice(0, -1) as TArgs,
-          args[args.length - 1] as Sink<T>,
-        );
+      if (inflow) {
+        await drain(inflow.data());
       } else {
-        // No arguments.
-        const opened = inflowData[key];
-        const sink = args[0] as Sink<T>;
+        await withInflow(async () => {
+          await drain(getInflow()!.data());
+        });
+      }
 
-        if (opened) {
-          // Reuse already opened drain.
-          await drainOnce(opened as DrainCtl<T>, sink);
-        } else if (defaultOpen === false) {
-          throw new TypeError(`Drain ${drainName} not opened yet`);
+      async function drain(inflowData: InflowData): Promise<void> {
+        if (args.length > 2) {
+          // Arguments specified. Open the drain.
+          await openDrain(
+            inflowData,
+            key,
+            open,
+            args.slice(0, -1) as TArgs,
+            args[args.length - 1] as Sink<T>,
+          );
         } else {
-          // Open no-args drain.
-          await openDrain(inflowData, key, (defaultOpen ?? open) as () => Faucet<T>, [], sink);
+          // No arguments.
+          const opened = inflowData[key];
+          const sink = args[0] as Sink<T>;
+
+          if (opened) {
+            // Reuse already opened drain.
+            await drainOnce(opened as DrainCtl<T>, sink);
+          } else if (defaultOpen === false) {
+            throw new TypeError(`Drain ${drainName} not opened yet`);
+          } else {
+            // Open no-args drain.
+            await openDrain(inflowData, key, (defaultOpen ?? open) as () => Faucet<T>, [], sink);
+          }
         }
       }
     },

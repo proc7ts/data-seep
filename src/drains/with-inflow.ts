@@ -1,7 +1,7 @@
 import { Faucet } from '../faucet.js';
+import { getInflow, setInflow, startInflow } from '../impl/inflow.js';
 import { sinkOnce } from '../impl/sink-once.js';
 import { Sink } from '../sink.js';
-import { getInflow, setInflow, startInflow } from './inflow.impl.js';
 
 /**
  * Starts inflow of {@link Drain drains}.
@@ -62,7 +62,7 @@ export async function withInflow(
     return sinkOnce(sink!, async (inflowSink: Sink<void>): Promise<void> => {
       const prevInflow = getInflow();
 
-      setInflow(inflow);
+      setInflow(startInflow(inflow, name));
 
       try {
         return sinkOnce(inflowSink);

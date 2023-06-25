@@ -2,8 +2,15 @@ import { Faucet } from '../faucet.js';
 import { createSink } from '../impl/create-sink.js';
 import { Sink } from '../sink.js';
 
-let faucetNameSeq = 0;
-
+/**
+ * Creates new {@link Faucet faucet}.
+ *
+ * Handles the {@link withValve valve} closing. Ensures that the returned promise resolves only when all data sank.
+ *
+ * @param pour - Pours the data to sink.
+ *
+ * @returns New faucet instance.
+ */
 export function createFaucet<T, TArgs extends unknown[] = []>(
   pour: Faucet<T, TArgs>,
 ): Faucet<T, TArgs> {
@@ -26,3 +33,5 @@ export function createFaucet<T, TArgs extends unknown[] = []>(
     },
   }[faucetName];
 }
+
+let faucetNameSeq = 0;

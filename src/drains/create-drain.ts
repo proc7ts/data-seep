@@ -80,7 +80,7 @@ export function createDrain<T, TArgs extends unknown[] = []>(
  * @typeParam TArgs - Type of drain arguments.
  * @param args - Drain arguments.
  *
- * @returns Faucet that pours just opened drain data.
+ * @returns Function that pours the data of just opened drain.
  */
 export type DrainOpener<out T, in TArgs extends unknown[] = []> = (
   this: void,

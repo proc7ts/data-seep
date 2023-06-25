@@ -7,7 +7,7 @@ import { Sink } from '../sink.js';
  *
  * Valve created by {@link withValve} faucet. Once created it can be used either immediately or somewhere downstream.
  *
- * Current valve is available via {@link whenClosed} function in synchronous part of {@link withValue} sink.
+ * Current valve is available via {@link whenClosed} function in synchronous part of {@link withValve} sink.
  */
 export interface Valve {
   /**

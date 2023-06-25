@@ -9,11 +9,7 @@ let drainNameSeq = 0;
 /*#__NO_SIDE_EFFECTS__*/
 export function createDrain<T, TArgs extends unknown[]>(
   open: (this: void, ...args: TArgs) => Faucet<T>,
-  openDefault: ((this: void) => Faucet<T>) | false,
-): Drain<T, TArgs>;
-
-export function createDrain<T, TArgs extends unknown[] | []>(
-  open: (this: void, ...args: TArgs) => (sink: Sink<T>) => Promise<void>,
+  ...openDefault: [] extends TArgs ? [] : [((this: void) => Faucet<T>) | false]
 ): Drain<T, TArgs>;
 
 export function createDrain<T, TArgs extends unknown[]>(

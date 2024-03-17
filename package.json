@@ -25,8 +25,8 @@
   },
   "sideEffects": false,
   "dependencies": {
-    "@proc7ts/async": "workspace:@proc7ts/async@^2.0.0",
-    "@proc7ts/primitives": "workspace:@proc7ts/primitives@^4.0.0"
+    "@proc7ts/async": "@proc7ts/async@^2.0.0",
+    "@proc7ts/primitives": "@proc7ts/primitives@^4.0.0"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",

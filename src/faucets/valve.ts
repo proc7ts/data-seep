@@ -93,7 +93,6 @@ export function whenClosed(callback: ValveCallback): void {
 }
 
 class ValveHandle implements Valve {
-
   #closed = false;
   #reason?: unknown;
   readonly #callbacks: ((reason: unknown) => void)[] = [];
@@ -134,7 +133,6 @@ class ValveHandle implements Valve {
       currentValve = prevValve;
     }
   }
-
 }
 
 let currentValve: ValveHandle | undefined;

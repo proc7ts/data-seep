@@ -2,7 +2,6 @@
  * Error indicating a valve is {@link Valve#close closed} abruptly.
  */
 export class ValveClosedError extends TypeError {
-
   /**
    * Constructs error.
    *
@@ -13,5 +12,4 @@ export class ValveClosedError extends TypeError {
     super(message, options);
     this.name = 'ValveClosedError';
   }
-
 }
